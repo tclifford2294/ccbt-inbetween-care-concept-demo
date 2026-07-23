@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CCBT · In-the-Moment Reset — Immersive (Concept 2)</title>
+  <style>
+    /*
+     * Material Sunrise tokens (inlined, self-contained) + immersive "sunrise" tints
+     * derived from the primary ramp for this full-screen breathing concept.
+     */
+    :root {
+      --sys-primary:            #075cba;
+      --sys-on-primary:         #ffffff;
+      --sys-primary-container:  #070f36;
+      --sys-primary-fixed-dim:  #e3f2fd;
+      --sys-on-surface:         #1b1d22;
+      --sys-inverse-on-surface: #ffffff;
+      --font-family: "Google Sans", "Google Sans Text", "Product Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+      /* ComPsych brand palette — "Our Rising Sun" (compsych.konpo.co) */
+      --brand-navy:   #070F36;  /* deep sky */
+      --brand-blue:   #8DC9F4;  /* daylight blue */
+      --brand-yellow: #fff58c;  /* the sun */
+      --brand-brown:  #92522D;  /* warm horizon / earth */
+      --brand-green:  #264B3C;  /* ground */
+      /* dawn-sky ramp derived from the palette above */
+      --imm-deep: #05081f;   /* deepest sky, above the navy */
+      --imm-sky:  #16265e;   /* mid sky */
+      --imm-core: #fff58c;   /* sun core */
+      --radius-full: 999px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--imm-deep); overflow: hidden; }
+    body { font-family: var(--font-family); -webkit-font-smoothing: antialiased; }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ===== full-viewport immersive shell ===== */
+    .imm {
+      position: fixed; inset: 0; overflow: hidden; color: #fff;
+      display: flex; flex-direction: column;
+      /* calm blue dawn — deep navy up top softening to a light-blue horizon */
+      background:
+        radial-gradient(85% 58% at 50% 80%, rgba(141,201,244,0.42) 0%, rgba(90,150,210,0.20) 36%, transparent 66%),
+        linear-gradient(180deg, #04061a 0%, var(--brand-navy) 30%, #10275e 54%, #23508c 74%, #4f83b8 90%, #7db6e4 100%);
+      animation: immEnter 1.5s cubic-bezier(.2,.7,.2,1) both;
+    }
+    @keyframes immEnter { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: none; } }
+
+    /* drifting aurora blobs */
+    .imm-aurora { position: absolute; inset: 0; pointer-events: none; }
+    .imm-aurora span { position: absolute; border-radius: 50%; filter: blur(64px); opacity: .55; mix-blend-mode: screen; }
+    .imm-aurora .b1 { width: 62vmin; height: 62vmin; top: -12%; left: -8%;
+      background: radial-gradient(circle, var(--sys-primary) 0%, transparent 70%); opacity: .3; animation: drift1 28s ease-in-out infinite; }
+    .imm-aurora .b2 { width: 78vmin; height: 78vmin; bottom: -22%; right: -14%;
+      background: radial-gradient(circle, var(--brand-blue) 0%, transparent 70%); opacity: .22; animation: drift2 34s ease-in-out infinite; }
+    .imm-aurora .b3 { width: 56vmin; height: 56vmin; top: 30%; left: 44%;
+      background: radial-gradient(circle, var(--brand-blue) 0%, transparent 70%); opacity: .28; animation: drift3 24s ease-in-out infinite; }
+    @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(8vmin,6vmin) scale(1.12); } }
+    @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-10vmin,-6vmin) scale(1.15); } }
+    @keyframes drift3 { 0%,100% { transform: translate(-50%,-50%) scale(1); } 50% { transform: translate(-42%,-58%) scale(1.2); } }
+
+    /* floating light motes */
+    .imm-particles { position: absolute; inset: 0; pointer-events: none; }
+    .imm-particles i { position: absolute; bottom: -6vh; border-radius: 50%; background: var(--brand-blue);
+      filter: blur(.5px); box-shadow: 0 0 8px rgba(141,201,244,0.9); animation: floatUp linear infinite; }
+    @keyframes floatUp {
+      0%   { transform: translate(0, 0);                 opacity: 0; }
+      12%  { opacity: .8; }
+      88%  { opacity: .8; }
+      100% { transform: translate(var(--dx, 0), -112vh); opacity: 0; }
+    }
+
+    /* film grain + vignette for depth */
+    .imm-grain { position: absolute; inset: 0; pointer-events: none; opacity: .05; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    .imm-vignette { position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(120% 105% at 50% 44%, transparent 52%, rgba(0,0,0,0.5) 100%); }
+
+    /* ===== top / bottom chrome (glass) ===== */
+    .imm-top { position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 24px; gap: 16px; }
+    .imm-glass { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: #fff; }
+    .imm-icon { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .15s; }
+    .imm-icon:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
+    .imm-pill { display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 16px; border-radius: var(--radius-full);
+      font-size: 14px; font-weight: 500; letter-spacing: .01em; transition: background .15s; }
+    .imm-pill:hover { background: rgba(255,255,255,0.2); }
+    .imm-brand { display: inline-flex; align-items: center; opacity: .9; }
+
+    /* ===== breathing stage — the ComPsych "Rising Sun" ===== */
+    .imm-stage { position: relative; z-index: 2; flex: 1; min-height: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vmin; }
+
+    /* wrapper holds the sun + the centered play button (button doesn't scale with the sun) */
+    .imm-sun-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    /* the rising sun (brand mark) + its light */
+    .imm-sun { position: relative; width: 50vmin; height: 37vmin; pointer-events: none;
+      transition: transform 4s cubic-bezier(.37,0,.63,1); will-change: transform; transform: scale(.82); }
+    .imm.is-ready .imm-sun { animation: sunIdle 7s ease-in-out infinite; }
+    @keyframes sunIdle { 0%,100% { transform: scale(.8); } 50% { transform: scale(.88); } }
+
+    /* warm glow rising from the horizon */
+    .imm-sunglow { position: absolute; left: 50%; bottom: 0; width: 92vmin; height: 92vmin;
+      transform: translate(-50%, 34%); border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(141,201,244,0.6) 0%, rgba(90,150,210,0.3) 30%, rgba(7,15,54,0.16) 50%, transparent 68%);
+      filter: blur(5px); }
+
+    /* slow radiating sun-rays anchored at the horizon */
+    .imm-rays { position: absolute; left: 50%; bottom: 0; width: 165vmin; height: 165vmin;
+      transform: translate(-50%, 50%); pointer-events: none; opacity: .36;
+      background: repeating-conic-gradient(from 0deg, rgba(141,201,244,0.12) 0deg 1.4deg, transparent 1.4deg 13deg);
+      -webkit-mask: radial-gradient(circle, #000 6%, transparent 58%); mask: radial-gradient(circle, #000 6%, transparent 58%);
+      animation: spin 72s linear infinite; }
+    @keyframes spin { from { transform: translate(-50%, 50%) rotate(0); } to { transform: translate(-50%, 50%) rotate(360deg); } }
+
+    /* the three concentric brand arcs, filled with a warm sunrise gradient */
+    .sun-mark { position: relative; width: 100%; height: 100%; overflow: visible;
+      filter: drop-shadow(0 0 22px rgba(141,201,244,0.6)); }
+    .sun-mark path { transition: opacity .5s ease; }
+
+    /* caption below the sun (does not scale) */
+    .imm-caption { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; width: 80vmin; pointer-events: none; }
+    .imm-phase { font-size: clamp(30px, 5.2vmin, 54px); font-weight: 400; letter-spacing: .04em; line-height: 1.1;
+      text-shadow: 0 2px 30px rgba(5,7,15,0.4); transition: opacity .6s ease; }
+    .imm-count { font-size: clamp(16px, 2.4vmin, 22px); font-weight: 300; letter-spacing: .3em; opacity: .8;
+      font-variant-numeric: tabular-nums; }
+
+    /* ===== bottom controls ===== */
+    .imm-bottom { position: relative; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 16px;
+      padding: 12px 24px 40px; }
+    .imm-time { font-size: 20px; font-weight: 400; letter-spacing: .12em; font-variant-numeric: tabular-nums; opacity: .92; }
+    /* play/pause centered on the sun */
+    .imm-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4;
+      width: 86px; height: 86px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; background: rgba(7,15,54,0.4); border: 1px solid rgba(255,255,255,0.45);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+      box-shadow: 0 12px 40px rgba(5,7,15,0.35); transition: filter .15s, background .2s; }
+    .imm-play:hover { filter: brightness(1.14); }
+    .imm-play:active { filter: brightness(0.94); }
+    .imm-hint { font-size: 13px; letter-spacing: .06em; opacity: .6; height: 16px; }
+
+    @media (max-width: 560px) {
+      .imm-top { padding: 16px; }
+      .imm-brand { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/jsx-source" id="app-src">
+const { useState } = React;
+
+const Icon = ({ d, size = 24, stroke = "currentColor", fill = "none", sw = 2 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke}
+       strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
+);
+const IcChevL     = (p) => <Icon {...p} d={<polyline points="15 18 9 12 15 6" />} />;
+const IcChevDown  = (p) => <Icon {...p} d={<polyline points="6 9 12 15 18 9" />} />;
+const IcPlay      = (p) => <Icon {...p} fill="currentColor" stroke="none" d={<polygon points="8 5 20 12 8 19 8 5" />} />;
+const IcPause     = (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></>} />;
+const IcRepeat    = (p) => <Icon {...p} d={<><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>} />;
+const IcMusic     = (p) => <Icon {...p} d={<><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></>} />;
+
+// ComPsych swoosh — 3-arc mark; color overridable for dark backgrounds.
+const CompsychMark = ({ color = "var(--sys-primary-container)", w = 22 }) => (
+  <svg width={w} height={w * 0.732} viewBox="0 0 23.06 16.886" fill={color} xmlns="http://www.w3.org/2000/svg" aria-label="ComPsych">
+    <svg x="0" y="0" width="23.06" height="15.584" viewBox="0 0 24 15.6895">
+      <path d="M11.9972 5.48972C14.8709 5.44427 17.6505 6.48269 19.7491 8.38578C21.8476 10.2889 23.101 12.9077 23.2447 15.6895C23.921 13.9306 24.1479 12.0393 23.9061 10.177C23.6643 8.31474 22.9609 6.53685 21.856 4.99523C20.7511 3.4536 19.2776 2.19406 17.5613 1.3242C15.845 0.454337 13.9369 0 12 0C10.0631 0 8.15503 0.454337 6.43872 1.3242C4.7224 2.19406 3.24886 3.4536 2.14398 4.99523C1.0391 6.53685 0.335709 8.31474 0.0938929 10.177C-0.147923 12.0393 0.0790229 13.9306 0.755345 15.6895C0.899154 12.9088 2.15186 10.291 4.2492 8.38819C6.34655 6.48541 9.12455 5.44646 11.9972 5.4905V5.48972Z" />
+    </svg>
+    <svg x="1.582" y="6.319" width="19.889" height="9.998" viewBox="0 0 20.6998 10.066">
+      <path d="M10.3487 0.00169587C7.65891 -0.0460333 5.05927 0.941494 3.11947 2.74788C1.17967 4.55426 0.0579042 7.03217 0 9.63861C0 9.78184 0.00399474 9.92429 0.0111847 10.066C0.573608 9.2118 1.26546 8.44452 2.06351 7.78989C4.38906 5.91715 7.32684 4.90826 10.3503 4.94402C13.3738 4.90812 16.3116 5.91703 18.6371 7.78989C19.4348 8.44484 20.1266 9.21207 20.6894 10.066C20.6958 9.92429 20.6998 9.78184 20.6998 9.63861C20.6419 7.03176 19.5198 4.55349 17.5795 2.74704C15.6392 0.940594 13.0389 -0.0466553 10.3487 0.00169587Z" />
+    </svg>
+    <svg x="2.264" y="12.09" width="18.527" height="4.796" viewBox="0 0 19.2818 4.82726">
+      <path d="M9.6409 0.00415971C7.74432 -0.0466691 5.86536 0.369028 4.17945 1.21245C2.49354 2.05587 1.05565 3.29951 0 4.82726H19.2818C18.2262 3.29951 16.7883 2.05587 15.1023 1.21245C13.4164 0.369028 11.5375 -0.0466691 9.6409 0.00415971Z" />
+    </svg>
+  </svg>
+);
+
+const AMBIENCE = ["Chirping Birds", "Ocean Waves", "Gentle Rain", "Silence"];
+
+// Pre-generated light motes (stable across renders).
+const PARTICLES = Array.from({ length: 18 }, () => ({
+  left: Math.random() * 100,
+  size: 2 + Math.random() * 4,
+  dur: 16 + Math.random() * 18,
+  delay: -Math.random() * 30,
+  dx: (Math.random() * 2 - 1) * 8,
+}));
+
+// progress-ring geometry (viewBox 0 0 400 400, r = 170)
+const R = 170, C = 2 * Math.PI * R;
+
+function Immersive() {
+  const IN = 4, OUT = 6, CYCLE = IN + OUT, TARGET = 120; // 2-minute session
+  const [running, setRunning] = useState(false);
+  const [tick, setTick] = useState(0);
+  const [ambience, setAmbience] = useState(0);
+
+  React.useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setTick(t => {
+        const nt = t + 1;
+        if (nt >= TARGET) { setRunning(false); return TARGET; }
+        return nt;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running]);
+
+  const started = running || tick > 0;
+  const done = tick >= TARGET;
+  const pos = tick % CYCLE;
+  const activePhase = pos < IN ? "in" : "out";
+  const phase = done ? "done" : !started ? "ready" : running ? activePhase : "paused";
+
+  // the ComPsych sun rises + grows on the in-breath, settles on the out-breath.
+  const sunScale = !started ? 0.82 : activePhase === "in" ? 1 : 0.78;
+  const rise = !started ? 0 : activePhase === "in" ? -4 : 0; // vmin — the sun climbs as you inhale
+  const dur = activePhase === "in" ? IN : OUT;
+  const count = activePhase === "in" ? IN - pos : CYCLE - pos;
+
+  const remaining = Math.max(TARGET - tick, 0);
+  const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  const phaseWord = done ? "Complete"
+    : phase === "in" ? "Breathe in"
+    : phase === "out" ? "Breathe out"
+    : phase === "paused" ? "Paused"
+    : "Breathe";
+
+  const hint = !started ? "Find a comfortable position" : running ? "" : done ? "Well done — carry this with you" : "Paused";
+  const onPlay = () => { if (done) { setTick(0); setRunning(true); } else setRunning(r => !r); };
+  const playIcon = done ? <IcRepeat size={30} /> : running ? <IcPause size={30} /> : <IcPlay size={30} />;
+
+  const sunStyle = started
+    ? { transform: `translateY(${rise}vmin) scale(${sunScale})`, transitionDuration: dur + "s" }
+    : undefined; // ready → CSS sunIdle animation drives it
+
+  return (
+    <div className={"imm is-" + phase}>
+      <div className="imm-aurora"><span className="b1" /><span className="b2" /><span className="b3" /></div>
+      <div className="imm-particles">
+        {PARTICLES.map((p, i) => (
+          <i key={i} style={{ left: p.left + "%", width: p.size, height: p.size,
+            animationDuration: p.dur + "s", animationDelay: p.delay + "s", "--dx": p.dx + "vw" }} />
+        ))}
+      </div>
+      <div className="imm-grain" />
+      <div className="imm-vignette" />
+
+      <header className="imm-top">
+        <button className="imm-icon imm-glass" aria-label="Back"><IcChevL size={22} /></button>
+        <button className="imm-pill imm-glass" onClick={() => setAmbience(a => (a + 1) % AMBIENCE.length)} title="Background sound">
+          <IcMusic size={16} />{AMBIENCE[ambience]}<IcChevDown size={16} />
+        </button>
+        <span className="imm-brand"><CompsychMark color="rgba(255,255,255,0.9)" w={26} /></span>
+      </header>
+
+      <div className="imm-stage">
+        <div className="imm-sun-wrap">
+        <div className="imm-sun" style={sunStyle}>
+          <div className="imm-rays" />
+          <div className="imm-sunglow" />
+          <svg className="sun-mark" viewBox="272 291 321 242">
+            <defs>
+              <linearGradient id="sunfill" x1="0" y1="291" x2="0" y2="533" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#eaf4fd" />
+                <stop offset="0.5" stopColor="#8DC9F4" />
+                <stop offset="1" stopColor="#3f74b8" />
+              </linearGradient>
+            </defs>
+            <path fill="url(#sunfill)" d="M584.801 501.954C578.564 423.46 512.637 361.503 432.5 361.503C352.363 361.503 286.445 423.468 280.199 501.954C274.889 486.04 272 469.026 272 451.352C272 362.933 343.999 291 432.5 291C521.001 291 593 362.933 593 451.352C593 469.026 590.111 486.04 584.801 501.954Z" />
+            <path fill="url(#sunfill)" d="M432.501 374.969C355.686 374.969 293.187 437.402 293.187 514.155C293.187 516.278 293.239 518.393 293.334 520.491C322.753 474.743 374.131 444.38 432.483 444.38C490.836 444.38 542.239 474.76 571.659 520.525C571.754 518.41 571.815 516.287 571.815 514.155C571.815 437.411 509.324 374.969 432.501 374.969Z" />
+            <path fill="url(#sunfill)" d="M432.49 458.953C379.187 458.953 332.26 486.75 305.469 528.598H559.519C532.729 486.75 485.802 458.953 432.499 458.953H432.49Z" />
+          </svg>
+        </div>
+          <button className="imm-play" onClick={onPlay} aria-label={running ? "Pause" : "Play"}>{playIcon}</button>
+        </div>
+        <div className="imm-caption">
+          <span className="imm-phase">{phaseWord}</span>
+          {running && !done && <span className="imm-count">{count}</span>}
+        </div>
+      </div>
+
+      <footer className="imm-bottom">
+        <span className="imm-time">{mmss(remaining)}</span>
+        <span className="imm-hint">{hint}</span>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Immersive />);
+  </script>
+
+  <script>
+    (function () {
+      var src = document.getElementById("app-src").textContent;
+      var code = Babel.transform(src, { presets: [["react", { runtime: "classic" }]] }).code;
+      window.eval(code);
+    })();
+  </script>
+</body>
+</html>

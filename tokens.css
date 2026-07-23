@@ -1,0 +1,84 @@
+/*
+ * Material Sunrise — design tokens (MIRROR).
+ * The authoritative copy is inlined in index.html so the prototype is
+ * self-contained (a sibling <link> can fail to load in the app preview panel).
+ * Keep this file in sync as a reference. Extracted live from the Sunrise
+ * Foundation & Tokens file and the GuidanceResources WIP file
+ * (Yfpcl4M7hiKSqdzgZBRmDt) on 2026-07-16. Every value maps 1:1 to a Sunrise
+ * variable name. Reference these custom properties only — no raw literals.
+ */
+:root {
+  /* color roles — accent */
+  --sys-primary:            #075cba;
+  --sys-on-primary:         #ffffff;
+  --sys-primary-container:  #070f36;
+  --sys-primary-fixed-dim:  #e3f2fd;
+  --sys-tertiary:           #ffffff;
+
+  /* color roles — surface */
+  --sys-surface:                    #f3f4f6;
+  --sys-surface-container-lowest:   #ffffff;
+  --sys-surface-container:          #f3f4f6;
+  --sys-surface-container-high:     #eceeef;
+  --sys-surface-container-highest:  #e6e8ea;
+  --sys-on-surface:                 #1b1d22;
+  --sys-on-surface-variant:         #565f6c;
+
+  /* color roles — outline */
+  --sys-outline:          #ebecf0;
+  --sys-outline-variant:  #d7dbe0;
+
+  /* color roles — custom / status */
+  --sys-info:             #226cee;
+  --sys-success:          #278647;
+  --sys-error:            #d82727;
+  --sys-error-container:  #f7d4d4;
+
+  /* color roles — inverse */
+  --sys-inverse-on-surface: #ffffff;
+
+  /* color roles — transparent */
+  --sys-primary-20:  rgba(7, 92, 186, 0.08);
+  --sys-white-80:    rgba(255,255,255,0.80);
+  --sys-white-50:    rgba(255,255,255,0.50);
+  --sys-black-50:    rgba(0,0,0,0.50);
+
+  /* typography — family (Google Sans is the Sunrise brand face) */
+  --font-family: "Google Sans", "Google Sans Text", "Product Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* type scale (size / line-height / tracking / weight) */
+  --headline-medium-size: 40px;  --headline-medium-lh: 48px;
+  --headline-small-size: 32px;   --headline-small-lh: 38.4px;
+  --title-medium-size: 24px;     --title-medium-lh: 31.2px;    --title-medium-weight: 500;
+  --body-large-size: 20px;       --body-large-lh: 30px;
+  --body-medium-size: 16px;      --body-medium-lh: 24px;
+  --body-small-size: 14px;       --body-small-lh: 20px;
+  --label-large-size: 16px;      --label-large-lh: 22.4px;     --label-large-weight: 500;
+  --label-medium-size: 14px;     --label-medium-lh: 20px;      --label-medium-track: 0.07px;
+  --label-small-size: 12px;      --label-small-lh: 18px;       --label-small-weight: 500; --label-small-track: 0.12px;
+
+  /* shape / radius */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-full: 999px;
+
+  /* spacing / padding scale */
+  --pad-2: 2px;  --pad-4: 4px;   --pad-8: 8px;   --pad-12: 12px;
+  --pad-16: 16px; --pad-20: 20px; --pad-24: 24px; --pad-32: 32px;
+  --pad-40: 40px; --pad-48: 48px;
+
+  /* stroke */
+  --stroke-thin: 1px;
+  --stroke-medium: 1.5px;
+
+  /* elevation */
+  --elev-1: 0 2px 8px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+  --elev-2: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.08);
+
+  /* M3 state-layer tints derived from the resolved roles above */
+  --state-primary-08:     rgba(7, 92, 186, 0.08);
+  --state-on-surface-04:  rgba(27, 29, 34, 0.04);
+  --state-on-surface-08:  rgba(27, 29, 34, 0.08);
+  --state-error-08:       rgba(216, 39, 39, 0.08);
+}

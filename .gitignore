@@ -1,0 +1,8 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# deploy / tooling
+.vercel
+node_modules
+npm-debug.log*

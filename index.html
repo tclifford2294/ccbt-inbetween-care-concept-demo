@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CCBT · Module explorer — Utility & Immersion shells</title>
+  <style>
+    :root {
+      --shell-bg: #1b1d22;
+      --shell-fg: #ffffff;
+      --shell-muted: #9aa0aa;
+      --shell-line: #2e3138;
+      --shell-active: #075cba;
+      --shell-immersion: #6d4bd8;
+      --font: "Google Sans", "Google Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--shell-bg); }
+    body { font-family: var(--font); }
+
+    .shell { display: flex; flex-direction: column; height: 100vh; }
+
+    /* top shell bar — a meta/prototype toolbar that sits ABOVE the app nav */
+    .shell-bar {
+      flex: none; min-height: 52px; display: flex; align-items: center; gap: 16px;
+      padding: 0 16px; background: var(--shell-bg); color: var(--shell-fg);
+      border-bottom: 1px solid var(--shell-line); overflow-x: auto;
+    }
+    .shell-title, .seg, .shell-caption { flex: none; }
+    .shell-title { font-size: 13px; font-weight: 500; letter-spacing: .02em; color: var(--shell-fg); white-space: nowrap; }
+    .shell-title span { color: var(--shell-muted); font-weight: 400; }
+
+    /* a faint separator between the parent-shell switch and the module switch */
+    .bar-div { flex: none; width: 1px; align-self: stretch; margin: 10px 2px; background: var(--shell-line); }
+
+    /* segmented control (used for both the parent shell and the module list) */
+    .seg { display: inline-flex; padding: 3px; gap: 2px; background: #26292f; border: 1px solid var(--shell-line); border-radius: 999px; }
+    .seg-btn {
+      font-family: inherit; font-size: 13px; font-weight: 500; color: var(--shell-muted);
+      background: transparent; border: 0; border-radius: 999px; min-height: 30px; padding: 4px 16px; cursor: pointer;
+      white-space: nowrap; transition: background .12s, color .12s; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.2;
+    }
+    .seg-btn:hover { color: var(--shell-fg); }
+    .seg-btn.active { background: var(--shell-active); color: #fff; }
+    /* the Immersion parent shell gets its own accent so the two worlds read distinctly */
+    #shell-seg .seg-btn[data-shell="immersion"].active { background: var(--shell-immersion); }
+    .seg-btn .m-sub { font-size: 10px; font-weight: 500; letter-spacing: .02em; opacity: .72; }
+    .seg-btn.active .m-sub { opacity: .9; }
+
+    /* module dropdown — replaces the module segmented control; groups modules by tier */
+    .mod-dd { position: relative; flex: none; }
+    .mod-dd-trigger { display: inline-flex; align-items: center; gap: 10px; min-height: 34px; padding: 4px 12px 4px 16px;
+      background: #26292f; border: 1px solid var(--shell-line); border-radius: 999px; color: var(--shell-fg);
+      font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap;
+      transition: border-color .12s, background .12s; }
+    .mod-dd-trigger:hover { border-color: #3a3f47; }
+    .mod-dd-trigger .mod-dd-kicker { color: var(--shell-muted); font-weight: 400; }
+    .mod-dd-trigger .mod-dd-caret { display: inline-flex; align-items: center; color: var(--shell-muted); transition: transform .15s ease; }
+    .mod-dd.open .mod-dd-trigger { border-color: var(--shell-active); }
+    .mod-dd.open .mod-dd-trigger .mod-dd-caret { transform: rotate(180deg); }
+    .mod-dd-menu { position: fixed; z-index: 100; min-width: 248px; background: #26292f; border: 1px solid var(--shell-line);
+      border-radius: 12px; padding: 6px; box-shadow: 0 14px 36px rgba(0,0,0,.45); }
+    .mod-dd-menu[hidden] { display: none; }
+    .mod-dd-group + .mod-dd-group { border-top: 1px solid var(--shell-line); margin-top: 4px; padding-top: 2px; }
+    .mod-dd-heading { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--shell-muted); padding: 8px 12px 5px; }
+    .mod-dd-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent;
+      border: 0; border-radius: 8px; padding: 9px 12px; color: var(--shell-fg); font-family: inherit; font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: background .12s; }
+    .mod-dd-item:hover { background: #31353c; }
+    .mod-dd-item.active { background: var(--shell-active); color: #fff; }
+    .mod-dd-item .mod-dd-check { margin-left: auto; opacity: 0; font-size: 12px; }
+    .mod-dd-item.active .mod-dd-check { opacity: 1; }
+
+    /* step navigation for the active module (drives Prev/Next inside the active iframe) */
+    .shell-nav { flex: none; display: inline-flex; gap: 6px; }
+    .shell-nav-btn { font-family: inherit; font-size: 13px; font-weight: 500; color: var(--shell-fg);
+      background: #26292f; border: 1px solid var(--shell-line); border-radius: 999px; min-height: 30px;
+      padding: 4px 14px; cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s; }
+    .shell-nav-btn:hover { border-color: #3a3f47; background: #31353c; }
+
+    .shell-caption { margin-left: 4px; font-size: 12px; color: var(--shell-muted); white-space: nowrap; }
+    .shell-note { margin-left: auto; font-size: 12px; color: var(--shell-muted); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    @media (max-width: 720px) { .shell-note, .shell-caption { display: none; } }
+
+    /* stage holds every module variant; inactive iframes stay loaded so progress is preserved */
+    .shell-stage { flex: 1; min-height: 0; position: relative; background: #f3f4f6; }
+    .shell-stage > iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #f3f4f6; }
+    .shell-stage iframe[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="shell-bar">
+      <div class="shell-title">CCBT <span>— Module explorer</span></div>
+      <!-- parent-shell switch: Utility ↔ Immersion -->
+      <div class="seg" id="shell-seg" role="tablist" aria-label="Presentation shell"></div>
+      <div class="bar-div"></div>
+      <!-- module switch: a dropdown, grouped by tier -->
+      <div class="mod-dd" id="module-dd">
+        <button class="mod-dd-trigger" id="module-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Module">
+          <span class="mod-dd-kicker">Module</span>
+          <span id="module-trigger-label">—</span>
+          <span class="mod-dd-caret" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="mod-dd-menu" id="module-menu" role="listbox" aria-label="Modules by tier" hidden></div>
+      </div>
+      <div class="bar-div"></div>
+      <!-- step navigation for the active module (replaces each module's in-page prototype footer) -->
+      <div class="shell-nav">
+        <button class="shell-nav-btn" id="nav-prev" aria-label="Previous step">‹ Prev</button>
+        <button class="shell-nav-btn" id="nav-next" aria-label="Next step">Next ›</button>
+      </div>
+      <div class="shell-caption" id="shell-caption"></div>
+      <div class="shell-note" id="freshstamp"></div>
+    </div>
+    <div class="shell-stage" id="stage"></div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ------------------------------------------------------------------ *
+       * CONFIG — add modules/shells here. Each module declares a `variants`
+       * map keyed by shell id; the same module can appear in multiple shells.
+       * `shared: true` means the variants share a step model + data, so the
+       * shell transfers {idx, data} between them on switch (no restart).
+       * ------------------------------------------------------------------ */
+      var SHELLS = [
+        { id: "utility",   name: "Utility" },
+        { id: "immersion", name: "Immersion" },
+      ];
+
+      /* Tier order for the module dropdown. Add "Tier 2" / "Tier 3" here as those builds land, and
+       * tag the new modules with the matching `tier` — the dropdown groups itself automatically. */
+      var TIERS = ["Tier 1", "Tier 2", "Tier 3"];
+
+      var MODULES = [
+        {
+          id: "solving", name: "Solving the Problem", tier: "Tier 1",
+          shared: true, // Utility and Immersion share the step model + inputs; switching transfers state
+          variants: {
+            utility:   { src: "concept-2.html", concept: "" },
+            immersion: { src: "solving-the-problem-immersion.html", concept: "" },
+          },
+        },
+        {
+          id: "reset", name: "In-the-Moment Reset", tier: "Tier 1",
+          shared: true, // Concept 1 (Utility) and Concept 3 (Immersion) share step + data
+          variants: {
+            utility:   { src: "in-the-moment-reset.html",   concept: "" },
+            immersion: { src: "in-the-moment-reset-3.html", concept: "" },
+          },
+        },
+        {
+          id: "grounding", name: "Grounding", tier: "Tier 1",
+          shared: true, // 5-4-3-2-1 senses walk; Utility & Immersion share step + tap-counts
+          variants: {
+            utility:   { src: "grounding-utility.html",   concept: "" },
+            immersion: { src: "grounding-immersion.html", concept: "" },
+          },
+        },
+        {
+          id: "screener", name: "Find Support", tier: "Tier 1",
+          shared: true, // needs screener + resource router; Utility & Immersion share the chosen driver
+          variants: {
+            utility:   { src: "screener-utility.html",   concept: "" },
+            immersion: { src: "screener-immersion.html", concept: "" },
+          },
+        },
+        {
+          id: "pulse", name: "Check-in", tier: "Tier 1",
+          shared: true, // weekly stress pulse (1-5) + tiered response; Utility & Immersion share the reading
+          variants: {
+            utility:   { src: "pulse-utility.html",   concept: "" },
+            immersion: { src: "pulse-immersion.html", concept: "" },
+          },
+        },
+        {
+          id: "psychoed", name: "Know Your Stress", tier: "Tier 2",
+          shared: true, // interactive stress-response "wave" explainer; shares active phase + explored set
+          variants: {
+            utility:   { src: "psychoed-utility.html",   concept: "" },
+            immersion: { src: "psychoed-immersion.html", concept: "" },
+          },
+        },
+        {
+          id: "reflect", name: "Reflect", tier: "Tier 2",
+          shared: true, // reflective prompt (reframe / lift / boundary) + guided write; shares mode + entries
+          variants: {
+            utility:   { src: "reflect-utility.html",   concept: "" },
+            immersion: { src: "reflect-immersion.html", concept: "" },
+          },
+        },
+      ];
+
+      /* -------------------------- state -------------------------- */
+      var activeShell = "utility";
+      var activeModule = "reset";     // start on the module that demos seamless switching
+      var pending = null;             // { toFrame, target } while a state transfer is in flight
+
+      var stamp = Date.now();
+      var stage = document.getElementById("stage");
+      var shellSeg = document.getElementById("shell-seg");
+      var moduleDD = document.getElementById("module-dd");
+      var moduleTrigger = document.getElementById("module-trigger");
+      var moduleTriggerLabel = document.getElementById("module-trigger-label");
+      var moduleMenu = document.getElementById("module-menu");
+      var caption = document.getElementById("shell-caption");
+      var navPrev = document.getElementById("nav-prev");
+      var navNext = document.getElementById("nav-next");
+
+      function moduleById(id) { return MODULES.filter(function (m) { return m.id === id; })[0]; }
+      function modulesInShell(shellId) { return MODULES.filter(function (m) { return !!m.variants[shellId]; }); }
+      function frameId(modId, shellId) { return "f__" + modId + "__" + shellId; }
+      function frameEl(modId, shellId) { return document.getElementById(frameId(modId, shellId)); }
+      function firstModuleIn(shellId) { var l = modulesInShell(shellId); return l.length ? l[0].id : null; }
+      // tiers present in a shell, in TIERS order, then any others in module order (future-proof)
+      function tiersInShell(shellId) {
+        var present = {}, extras = [];
+        modulesInShell(shellId).forEach(function (m) {
+          var t = m.tier || "Other";
+          present[t] = true;
+          if (TIERS.indexOf(t) === -1 && extras.indexOf(t) === -1) extras.push(t);
+        });
+        return TIERS.filter(function (t) { return present[t]; }).concat(extras);
+      }
+
+      /* ---- build one iframe per (module, variant); keep them all alive ---- */
+      MODULES.forEach(function (mod) {
+        Object.keys(mod.variants).forEach(function (shellId) {
+          var v = mod.variants[shellId];
+          var f = document.createElement("iframe");
+          f.id = frameId(mod.id, shellId);
+          f.title = mod.name + " · " + shellId + (v.concept ? " · " + v.concept : "");
+          f.hidden = true;
+          // per-load cache-bust so a stale cached concept page can never be reused
+          f.src = v.src + "?t=" + stamp;
+          stage.appendChild(f);
+        });
+      });
+
+      /* ---- build the parent-shell segmented control (static) ---- */
+      SHELLS.forEach(function (s) {
+        var b = document.createElement("button");
+        b.className = "seg-btn";
+        b.setAttribute("role", "tab");
+        b.dataset.shell = s.id;
+        b.textContent = s.name;
+        b.addEventListener("click", function () { switchShell(s.id); });
+        shellSeg.appendChild(b);
+      });
+
+      /* ---- (re)build the module dropdown menu for the active shell, grouped by tier ---- */
+      function buildModuleMenu() {
+        moduleMenu.innerHTML = "";
+        tiersInShell(activeShell).forEach(function (tier) {
+          var group = document.createElement("div");
+          group.className = "mod-dd-group";
+          var h = document.createElement("div");
+          h.className = "mod-dd-heading";
+          h.textContent = tier;
+          group.appendChild(h);
+          modulesInShell(activeShell)
+            .filter(function (m) { return (m.tier || "Other") === tier; })
+            .forEach(function (mod) {
+              var b = document.createElement("button");
+              b.className = "mod-dd-item";
+              b.setAttribute("role", "option");
+              b.dataset.module = mod.id;
+              var name = document.createElement("span");
+              name.textContent = mod.name;
+              b.appendChild(name);
+              var chk = document.createElement("span");
+              chk.className = "mod-dd-check";
+              chk.textContent = "✓";
+              b.appendChild(chk);
+              b.addEventListener("click", function () { selectModule(mod.id); closeMenu(); });
+              group.appendChild(b);
+            });
+          moduleMenu.appendChild(group);
+        });
+      }
+
+      // reflect the active module in the trigger label + menu highlight
+      function updateModuleUI() {
+        var mod = moduleById(activeModule);
+        moduleTriggerLabel.textContent = mod ? mod.name : "—";
+        [].forEach.call(moduleMenu.querySelectorAll(".mod-dd-item"), function (b) {
+          b.classList.toggle("active", b.dataset.module === activeModule);
+        });
+      }
+
+      function openMenu() {
+        var r = moduleTrigger.getBoundingClientRect();
+        moduleMenu.style.top = (r.bottom + 6) + "px";
+        moduleMenu.style.left = r.left + "px";
+        moduleMenu.hidden = false;
+        moduleDD.classList.add("open");
+        moduleTrigger.setAttribute("aria-expanded", "true");
+      }
+      function closeMenu() {
+        moduleMenu.hidden = true;
+        moduleDD.classList.remove("open");
+        moduleTrigger.setAttribute("aria-expanded", "false");
+      }
+      function toggleMenu() { if (moduleMenu.hidden) openMenu(); else closeMenu(); }
+
+      function render() {
+        // parent-shell active state
+        [].forEach.call(shellSeg.children, function (b) {
+          b.classList.toggle("active", b.dataset.shell === activeShell);
+        });
+        // module dropdown for this shell + active state
+        buildModuleMenu();
+        updateModuleUI();
+        // exactly one iframe visible: (activeModule, activeShell)
+        [].forEach.call(stage.querySelectorAll("iframe"), function (f) { f.hidden = true; });
+        var mod = moduleById(activeModule);
+        var v = mod && mod.variants[activeShell];
+        if (v) frameEl(activeModule, activeShell).hidden = false;
+        // caption
+        caption.textContent = v && v.concept ? v.concept : "";
+      }
+
+      function selectModule(modId) {
+        if (modId === activeModule) return;
+        activeModule = modId;
+        render();
+      }
+
+      /* ---- dropdown wiring: toggle on click, close on outside-click / Escape ---- */
+      moduleTrigger.addEventListener("click", function (e) { e.stopPropagation(); toggleMenu(); });
+      document.addEventListener("click", function (e) { if (!moduleDD.contains(e.target)) closeMenu(); });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+      /* ---- step nav: forward Prev/Next to the active module iframe ---- */
+      function navActive(dir) {
+        var f = frameEl(activeModule, activeShell);
+        if (f && f.contentWindow) {
+          try { f.contentWindow.postMessage({ type: dir > 0 ? "reset:next" : "reset:prev" }, "*"); } catch (e) {}
+        }
+      }
+      navPrev.addEventListener("click", function () { navActive(-1); });
+      navNext.addEventListener("click", function () { navActive(1); });
+
+      /* ---- switching the parent shell ----
+       * If the current module also lives in the target shell and is `shared`,
+       * transfer {idx, data} from the visible variant into the target variant,
+       * then reveal it — so you stay on the same page with the same inputs.
+       * If the module isn't in the target shell, fall back to that shell's first module.
+       */
+      function switchShell(target) {
+        if (target === activeShell) return;
+        var mod = moduleById(activeModule);
+        var vTarget = mod && mod.variants[target];
+
+        if (!vTarget) {
+          activeShell = target;
+          activeModule = firstModuleIn(target);
+          render();
+          return;
+        }
+
+        var vCurrent = mod.variants[activeShell];
+        if (mod.shared && vCurrent) {
+          var fromFrame = frameEl(mod.id, activeShell);
+          var toFrame = frameEl(mod.id, target);
+          pending = { toFrame: toFrame, target: target };
+          // ask the visible variant for its current state; reply handled below
+          try { fromFrame.contentWindow.postMessage({ type: "reset:getState" }, "*"); } catch (err) {}
+          // safety net: if no reply arrives, switch anyway (fresh state)
+          setTimeout(function () {
+            if (pending && pending.target === target) { finalizeSwitch(target); }
+          }, 300);
+          return;
+        }
+
+        // present in target but not state-shared: just switch the look
+        activeShell = target;
+        render();
+      }
+
+      function finalizeSwitch(target) {
+        pending = null;
+        activeShell = target;
+        render();
+      }
+
+      window.addEventListener("message", function (e) {
+        var m = e && e.data;
+        if (!m || typeof m !== "object") return;
+        if (m.type === "reset:state" && pending) {
+          var to = pending.toFrame, target = pending.target;
+          try {
+            to.contentWindow.postMessage({ type: "reset:setState", idx: m.idx, data: m.data }, "*");
+          } catch (err) {}
+          pending = null;
+          // let the incoming app apply the state, then reveal it (no flash of its old step)
+          setTimeout(function () { finalizeSwitch(target); }, 50);
+        }
+      });
+
+      /* ---- freshness stamp ---- */
+      var note = document.getElementById("freshstamp");
+      if (note) {
+        var d = new Date(), pad = function (n) { return (n < 10 ? "0" : "") + n; };
+        note.textContent = "loaded " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

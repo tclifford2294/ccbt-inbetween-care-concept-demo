@@ -1,0 +1,1808 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CCBT · Grounding (Immersion) — Sunrise prototype</title>
+  <style>
+    /*
+     * Material Sunrise — design tokens (inlined so this file is self-contained).
+     * Extracted live from the Sunrise Figma files (Foundation & Tokens) and from
+     * the GuidanceResources WIP file (Yfpcl4M7hiKSqdzgZBRmDt) on 2026-07-16.
+     * Every value maps 1:1 to a Sunrise variable name. Reference these custom
+     * properties only — no raw literals in component code. Mirrored in tokens.css.
+     * Identical to concept-2.html so both modules share one framework + timing.
+     */
+    :root {
+      /* color roles — accent */
+      --sys-primary:            #075cba;
+      --sys-on-primary:         #ffffff;
+      --sys-primary-container:  #070f36;
+      --sys-primary-fixed-dim:  #e3f2fd;
+      --sys-tertiary:           #ffffff;
+
+      /* color roles — surface */
+      --sys-surface:                    #f3f4f6;
+      --sys-surface-container-lowest:   #ffffff;
+      --sys-surface-container:          #f3f4f6;
+      --sys-surface-container-high:     #eceeef;
+      --sys-surface-container-highest:  #e6e8ea;
+      --sys-on-surface:                 #1b1d22;
+      --sys-on-surface-variant:         #565f6c;
+
+      /* color roles — outline */
+      --sys-outline:          #ebecf0;
+      --sys-outline-variant:  #d7dbe0;
+
+      /* color roles — custom / status */
+      --sys-info:             #226cee;
+      --sys-success:          #278647;
+      --sys-error:            #d82727;
+      --sys-error-container:  #f7d4d4;
+
+      /* color roles — inverse */
+      --sys-inverse-on-surface: #ffffff;
+
+      /* color roles — transparent */
+      --sys-primary-20:  rgba(7, 92, 186, 0.08);
+      --sys-white-80:    rgba(255,255,255,0.80);
+      --sys-white-50:    rgba(255,255,255,0.50);
+      --sys-black-50:    rgba(0,0,0,0.50);
+
+      /* typography — family (Google Sans is the Sunrise brand face) */
+      --font-family: "Google Sans", "Google Sans Text", "Product Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+      /* type scale (size / line-height / tracking / weight) */
+      --headline-medium-size: 40px;  --headline-medium-lh: 48px;
+      --headline-small-size: 32px;   --headline-small-lh: 38.4px;
+      --title-medium-size: 24px;     --title-medium-lh: 31.2px;    --title-medium-weight: 500;
+      --body-large-size: 20px;       --body-large-lh: 30px;
+      --body-medium-size: 16px;      --body-medium-lh: 24px;
+      --body-small-size: 14px;       --body-small-lh: 20px;
+      --label-large-size: 16px;      --label-large-lh: 22.4px;     --label-large-weight: 500;
+      --label-medium-size: 14px;     --label-medium-lh: 20px;      --label-medium-track: 0.07px;
+      --label-small-size: 12px;      --label-small-lh: 18px;       --label-small-weight: 500; --label-small-track: 0.12px;
+
+      /* shape / radius */
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   16px;
+      --radius-full: 999px;
+
+      /* spacing / padding scale */
+      --pad-2: 2px;  --pad-4: 4px;   --pad-8: 8px;   --pad-12: 12px;
+      --pad-16: 16px; --pad-20: 20px; --pad-24: 24px; --pad-32: 32px;
+      --pad-40: 40px; --pad-48: 48px;
+
+      /* stroke */
+      --stroke-thin: 1px;
+      --stroke-medium: 1.5px;
+
+      /* elevation */
+      --elev-1: 0 2px 8px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+      --elev-2: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.08);
+
+      /* M3 state-layer tints derived from the resolved roles above */
+      --state-primary-08:     rgba(7, 92, 186, 0.08);
+      --state-on-surface-04:  rgba(27, 29, 34, 0.04);
+      --state-on-surface-08:  rgba(27, 29, 34, 0.08);
+      --state-error-08:       rgba(216, 39, 39, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--sys-surface); }
+    body {
+      font-family: var(--font-family);
+      color: var(--sys-on-surface);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    input, textarea { font-family: inherit; }
+    a { color: var(--sys-primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ---- app frame (no browser chrome) ---- */
+    .frame { position: relative; display: flex; flex-direction: column; min-height: 100vh; background: var(--sys-surface); }
+    .screen { position: relative; z-index: 1; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* ---- prototype step navigator (a review control, not part of the app) ---- */
+    .stepnav { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px; color: var(--sys-on-surface-variant); font-size: 13px; background: var(--sys-surface); border-top: var(--stroke-thin) solid var(--sys-outline); }
+    .stepnav button { background: var(--sys-surface-container-lowest); color: var(--sys-on-surface); border: 1px solid var(--sys-outline-variant); border-radius: var(--radius-full); height: 32px; padding: 0 14px; font-size: 13px; }
+    .stepnav button:disabled { opacity: .4; cursor: default; }
+    .dots { display: flex; gap: 7px; }
+    .dots b { width: 8px; height: 8px; border-radius: 50%; background: var(--sys-outline-variant); display: block; cursor: pointer; }
+    .dots b.on { background: var(--sys-primary); }
+
+    /* ---- Sunrise type primitives ---- */
+    .sr-headline-m { font-size: var(--headline-medium-size); line-height: var(--headline-medium-lh); font-weight: 400; margin: 0; }
+    .sr-headline-s { font-size: var(--headline-small-size); line-height: var(--headline-small-lh); font-weight: 400; margin: 0; }
+    .sr-body-m { font-size: var(--body-medium-size); line-height: var(--body-medium-lh); font-weight: 400; }
+    .sr-label-l { font-size: var(--label-large-size); line-height: var(--label-large-lh); font-weight: var(--label-large-weight); }
+    .sr-label-m { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); font-weight: 400; letter-spacing: var(--label-medium-track); }
+    .eyebrow { font-size: var(--label-small-size); line-height: var(--label-small-lh); font-weight: var(--label-small-weight); letter-spacing: .06em; text-transform: uppercase; color: var(--sys-primary); }
+
+    /* ---- Sunrise: Header Navigation ---- */
+    .navbar { height: 64px; background: var(--sys-surface-container-lowest); border-bottom: var(--stroke-thin) solid var(--sys-outline); display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 12px; }
+    .nav-left { display: flex; align-items: center; gap: var(--pad-4); }
+    .nav-right { display: flex; align-items: center; gap: var(--pad-12); }
+    .icon-buttons { display: flex; align-items: center; gap: var(--pad-8); }
+    .nav-item { width: 40px; height: 40px; border-radius: var(--radius-full); background: transparent; border: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--sys-on-surface); position: relative; }
+    .nav-item:hover { background: var(--state-on-surface-04); }
+    .brandmark { display: inline-flex; align-items: center; }
+    .badge { position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-full); background: var(--sys-primary); color: var(--sys-on-primary); font-size: var(--label-small-size); font-weight: var(--label-small-weight); border: var(--stroke-thin) solid var(--sys-surface-container-lowest); display: inline-flex; align-items: center; justify-content: center; }
+    .nav-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--sys-primary-fixed-dim); color: var(--sys-primary); border: var(--stroke-thin) solid var(--sys-primary-20); display: inline-flex; align-items: center; justify-content: center; font-size: var(--label-small-size); font-weight: var(--label-small-weight); }
+    .crumbs { display: flex; align-items: center; font-size: var(--label-medium-size); letter-spacing: var(--label-medium-track); }
+    .crumbs .crumb { padding: 2px 8px; display: inline-flex; align-items: center; }
+    .crumbs .sep { color: var(--sys-on-surface-variant); }
+    .crumbs .c-muted { color: var(--sys-on-surface-variant); }
+    .crumbs .c-cur { color: var(--sys-on-surface); }
+    .emergency { height: 40px; border-radius: var(--radius-full); background: var(--sys-surface-container-lowest); border: var(--stroke-thin) solid var(--sys-error); color: var(--sys-error); display: inline-flex; align-items: center; gap: 8px; padding: 0 16px 0 10px; font-size: var(--label-medium-size); font-weight: 500; white-space: nowrap; }
+    .emergency:hover { background: var(--state-error-08); }
+    .emergency .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--sys-error); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+
+    /* ---- Sunrise: Content Section Template (the white card shell) ---- */
+    .app { flex: 1; min-height: 0; background: var(--sys-surface); display: flex; flex-direction: column; }
+    .section-wrap { flex: 1; min-height: 0; padding: 16px; display: flex; }
+    .section-card { position: relative; flex: 1; min-height: 0; background: var(--sys-surface-container-lowest); border-radius: var(--radius-lg); box-shadow: var(--elev-1); display: flex; flex-direction: column; overflow: hidden; }
+    .section-progress { position: relative; z-index: 1; padding: 28px 32px 4px; }
+    .section-body { position: relative; z-index: 1; flex: 1; min-height: 0; padding: 20px 32px; display: flex; justify-content: center; overflow: auto; }
+    .col { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: var(--pad-40); }
+
+    /* immersive sub-flow — cross-dissolve between sub-steps (shared timing) */
+    .ex-stage { display: flex; flex-direction: column; gap: var(--pad-40); transition: opacity 220ms ease; }
+    .ex-stage.in  { opacity: 1; }
+    .ex-stage.out { opacity: 0; }
+    /* staggered entrance applied to every step's content blocks — identical timing to concept-2 */
+    @keyframes revealIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .col > *:not(.ex-stage), .ex-stage > * { animation: revealIn .7s ease both; }
+    .col > *:not(.ex-stage):nth-child(1), .ex-stage > *:nth-child(1) { animation-delay: 0s; }
+    .col > *:not(.ex-stage):nth-child(2), .ex-stage > *:nth-child(2) { animation-delay: .55s; }
+    .col > *:not(.ex-stage):nth-child(3), .ex-stage > *:nth-child(3) { animation-delay: 1.25s; }
+    .col > *:not(.ex-stage):nth-child(4), .ex-stage > *:nth-child(4) { animation-delay: 1.95s; }
+    .col > *:not(.ex-stage):nth-child(5), .ex-stage > *:nth-child(5) { animation-delay: 2.65s; }
+    /* Intro / Learn / Done: whole content fades in together (no stagger) */
+    .col--whole { animation: revealIn .7s ease both; }
+    .col--whole > * { animation: none !important; }
+    /* leaving a step: the whole card content fades + drops off-screen to make room */
+    .col--leaving, .col--leaving.col--whole { animation: colLeave .45s cubic-bezier(.4,0,1,1) both !important; }
+    .col--leaving > * { animation: none !important; }
+    @keyframes colLeave { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(56px); } }
+    .ex-recap { display: flex; flex-direction: column; gap: 6px; }
+    .ex-recap .k { font-size: var(--label-small-size); line-height: var(--label-small-lh); font-weight: var(--label-small-weight); letter-spacing: .06em; text-transform: uppercase; color: var(--sys-on-surface-variant); }
+    .section-actions { position: relative; z-index: 1; border-top: var(--stroke-thin) solid var(--sys-outline); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .actions-help { color: var(--sys-on-surface-variant); font-size: var(--label-medium-size); }
+
+    /* ---- Sunrise: Progress Tracker (underline step-tabs) ---- */
+    .ptrack { display: flex; gap: 8px; max-width: 860px; margin: 0 auto; }
+    .ptab { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; background: transparent; border: 0; padding: 0; text-align: left; }
+    .ptab .lbl { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); color: var(--sys-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ptab.done .lbl, .ptab.cur .lbl { color: var(--sys-on-surface); font-weight: 500; }
+    .ptab .bar { height: 3px; border-radius: var(--radius-full); background: var(--sys-outline-variant); }
+    .ptab.done .bar, .ptab.cur .bar { background: var(--sys-success); }
+
+    /* ---- Sunrise: Button ---- */
+    .sr-btn { height: 48px; border-radius: var(--radius-full); padding: 0 24px; font-size: var(--label-large-size); line-height: var(--label-large-lh); font-weight: var(--label-large-weight); display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: var(--stroke-thin) solid transparent; transition: filter .12s, background .12s; }
+    .sr-btn--filled { background: var(--sys-primary); color: var(--sys-on-primary); }
+    .sr-btn--filled:hover { filter: brightness(1.08); }
+    .sr-btn--filled:disabled { background: var(--sys-surface-container-high); color: var(--sys-on-surface-variant); cursor: default; filter: none; }
+    .sr-btn--outlined { background: var(--sys-surface-container-lowest); color: var(--sys-on-surface); border-color: var(--sys-outline-variant); }
+    .sr-btn--outlined:hover { background: var(--state-on-surface-04); }
+    .sr-btn--text { background: transparent; color: var(--sys-primary); height: 44px; padding: 0 12px; }
+    .sr-btn--text:hover { background: var(--state-primary-08); }
+    .sr-btn--tonal { background: var(--sys-primary-fixed-dim); color: var(--sys-primary); }
+    .sr-btn--tonal:hover { filter: brightness(0.97); }
+
+    /* ---- Sunrise: Input Field ---- */
+    .sr-field { display: flex; flex-direction: column; gap: 8px; }
+    .sr-flabel { display: flex; gap: 4px; align-items: center; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); font-weight: 500; color: var(--sys-on-surface); }
+    .sr-fhelp { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); color: var(--sys-on-surface-variant); }
+    .sr-input, .sr-textarea { width: 100%; border-radius: var(--radius-md); border: var(--stroke-thin) solid var(--sys-outline-variant); background: var(--sys-surface-container-lowest); padding: 14px 16px; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); outline: none; transition: border-color .12s, box-shadow .12s; }
+    .sr-input { height: 56px; padding: 0 16px; }
+    .sr-textarea { resize: vertical; min-height: 88px; }
+    .sr-input::placeholder, .sr-textarea::placeholder { color: var(--sys-on-surface-variant); }
+    .sr-input:focus, .sr-textarea:focus { border-color: var(--sys-primary); box-shadow: 0 0 0 1px var(--sys-primary); }
+
+    /* ---- Sunrise: Divider ---- */
+    .sr-divider { height: 1px; background: var(--sys-outline); border: 0; width: 100%; margin: 0; }
+
+    /* ---- Sunrise: Card ---- */
+    .sr-card { background: var(--sys-surface-container-lowest); border-radius: var(--radius-lg); border: 1px solid var(--sys-outline); box-shadow: var(--elev-1); padding: var(--pad-24); }
+    .sr-card--muted { background: var(--sys-surface-container); border: 0; box-shadow: none; }
+
+    /* ---- Sunrise: Card Item / Style=Image (hero media card, node 1340:17442) ---- */
+    .herocard { position: relative; width: 100%; min-height: 156px; border-radius: var(--radius-lg); overflow: hidden;
+      background: linear-gradient(135deg, var(--sys-primary-container) 0%, var(--sys-primary) 150%); }
+    .herocard .hc-media { position: absolute; inset: 0; background-image: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0.12) 60%, rgba(0,0,0,0.4) 100%); mix-blend-mode: multiply; pointer-events: none; }
+    .herocard .hc-content { position: relative; min-height: 156px; padding: var(--pad-16); display: flex; flex-direction: column; justify-content: space-between; gap: var(--pad-24); }
+    .herocard .hc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; width: 100%; }
+    .herocard .hc-icon { width: 32px; height: 32px; flex: none; color: var(--sys-inverse-on-surface); display: inline-flex; }
+    .herocard .hc-text { display: flex; flex-direction: column; gap: var(--pad-2); }
+    .herocard .hc-title { font-size: var(--body-large-size); line-height: var(--body-large-lh); font-weight: 400; color: var(--sys-inverse-on-surface); margin: 0; }
+    .herocard .hc-desc { font-size: var(--body-small-size); line-height: var(--body-small-lh); color: var(--sys-white-80); }
+    .herocard .hc-chip { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px; border-radius: var(--radius-full); background: rgba(255,255,255,0.14); color: var(--sys-inverse-on-surface); font-size: var(--label-small-size); font-weight: var(--label-small-weight); white-space: nowrap; }
+
+    /* ---- Sunrise: Selection Card (selectable row) ---- */
+    .selcard { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--sys-surface-container-lowest); border: var(--stroke-thin) solid var(--sys-outline-variant); border-radius: var(--radius-md); padding: 16px 18px; min-height: 56px; transition: background .12s, border-color .12s, box-shadow .12s; }
+    .selcard:hover { background: var(--sys-surface-container-lowest); border-color: var(--sys-primary); box-shadow: 0 0 0 1px var(--sys-primary); }
+    .selcard.sel { border-color: var(--sys-primary); border-width: var(--stroke-medium); background: var(--sys-surface-container-lowest); }
+    .selcard .lead { color: var(--sys-on-surface-variant); display: inline-flex; }
+    .selcard.sel .lead { color: var(--sys-primary); }
+    .selcard .txt { flex: 1; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); }
+    .selcard .txt.ph { color: var(--sys-on-surface-variant); }
+    .selcard .check { width: 22px; height: 22px; flex: none; border-radius: 6px; border: 2px solid var(--sys-outline-variant); display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+    .selcard.sel .check { background: var(--sys-primary); border-color: var(--sys-primary); color: #fff; }
+
+    /* ---- "An example" broken into step boxes (per Option Card style) ---- */
+    .ex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+    .ex-grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .ex-box { display: flex; flex-direction: column; justify-content: flex-start; gap: var(--pad-24); min-height: 208px;
+      background: var(--sys-surface-container-lowest); border: var(--stroke-thin) solid var(--sys-outline-variant);
+      border-radius: var(--radius-md); padding: 18px; }
+    .ex-box .ex-top { display: flex; align-items: flex-start; justify-content: space-between; }
+    .ex-box .ex-chip { width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--sys-surface-container-high);
+      color: var(--sys-on-surface); display: inline-flex; align-items: center; justify-content: center; }
+    .ex-box .ex-info { color: var(--sys-on-surface-variant); display: inline-flex; }
+    .ex-box .ex-text { display: flex; flex-direction: column; gap: 4px; }
+    .ex-box .ex-sub { font-size: var(--label-small-size); line-height: var(--label-small-lh); font-weight: var(--label-small-weight); color: var(--sys-on-surface-variant); }
+    .ex-box .ex-copy { margin: 0; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); }
+
+    /* ---- NonSystem breathing player ----
+     * The breathing lives in a PERSISTENT full-screen layer that sits behind the app.
+     * On the Practice step it dissolves IN; on leaving Practice it dissolves OUT. The
+     * nav / progress / footer stay mounted on top of it the whole time. ---- */
+    /* Entering Practice is a SLOW, immersive fade-in (asymmetric: ~1.6s in, quicker out). */
+    .practice-bg-layer { position: fixed; inset: 0; z-index: 0; overflow: hidden;
+      opacity: 0; pointer-events: none; transition: opacity .55s ease; }
+    .frame.is-practice .practice-bg-layer { opacity: 1; pointer-events: auto; transition: opacity 1.6s ease; }
+
+    /* the color field gently zoom-settles as it fades in, drawing the user inward */
+    /* Concept 3: the branded "Pathways in motion" papercut (inlined so its waves can breathe) */
+    .breathe2 { position: absolute; inset: 0; overflow: hidden; transform: scale(1.09);
+      background: #F2F1E6; transition: transform .6s ease; }
+    .frame.is-practice .breathe2 { transform: scale(1);
+      transition: transform 2.3s cubic-bezier(.16,1,.3,1); }
+    .paper-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    /* a gentle, constant sway on each wave layer — life underneath the breath-driven swell (parallax) */
+    .wave-drift-1 { transform-box: view-box; animation: waveSway1 13s ease-in-out infinite; }
+    .wave-drift-2 { transform-box: view-box; animation: waveSway2 17s ease-in-out infinite; }
+    @keyframes waveSway1 { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-22px); } }
+    @keyframes waveSway2 { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(16px); } }
+
+    /* concentric ripple — translucent circles that scale with the breath */
+    .b2-orb { position: absolute; top: 50%; left: 50%; width: 340px; height: 340px;
+      transform: translate(-50%, -50%) scale(0.55); transition: transform 4s ease-in-out, opacity .5s ease;
+      opacity: 0; will-change: transform; pointer-events: none; }
+    .breathe2.is-in .b2-orb, .breathe2.is-out .b2-orb { opacity: 1; }
+    /* soft frosted bloom — reads as a gentle breathing glow on the light papercut */
+    .b2-ring { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.4); }
+    .b2-ring.a { inset: 0; } .b2-ring.b { inset: 12%; } .b2-ring.c { inset: 26%; }
+    .b2-ring.d { inset: 40%; background: rgba(255,255,255,0.62); }
+
+    /* foreground controls — inset so they clear the nav (top) and footer/stepnav (bottom) */
+    /* controls always read dark on the light papercut background */
+    .breath-ui { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 200px 24px 150px; color: var(--sys-primary-container); }
+    /* IN: the incoming section fades in and slides UP into place — same 0.6s speed and easing as the
+       dissolve-out below, so the two read as one consistent, calming motion. */
+    .frame.is-practice .breath-ui { animation: breathUiIn .6s cubic-bezier(.4,0,.2,1) both; }
+    @keyframes breathUiIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+    /* OUT: on a step change the outgoing section fades out and slides DOWN over the persistent
+       papercut (which never moves) — the exact mirror of the in. The transition is declared only on
+       the leaving state, so when it's removed the wrapper snaps back and breathUiIn cleanly owns the
+       entrance (no double motion). Both directions share 0.6s + the same easing. */
+    .breath-fg { position: absolute; inset: 0; z-index: 1; }
+    .breath-fg.is-leaving { opacity: 0; transform: translateY(18px);
+      transition: opacity .6s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.4,0,.2,1); }
+
+    /* generous, consistent vertical rhythm between the icon/head, title and the component below —
+       shared across Practice, Reflect, Homework and Done so they all breathe the same way */
+    .b2-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 44px; padding: 0 24px; }
+    /* DS Emphasized / Headline / Headline Medium — 40/48, Google Sans Medium (500), tracking 0 */
+    .b2-phase { font-size: var(--headline-medium-size); line-height: var(--headline-medium-lh); font-weight: 500; letter-spacing: 0; text-shadow: 0 2px 22px rgba(255,255,255,0.5); }
+    /* shared supporting lede beneath the hero title — one editorial voice across every step */
+    .b2-sub { margin: 0; max-width: 560px; font-size: var(--body-large-size); line-height: var(--body-large-lh);
+      color: var(--sys-primary-container); opacity: .8; text-align: center; text-wrap: balance; transition: opacity .6s ease; }
+    /* during active breathing the guidance recedes so Practice stays pure */
+    .breath-ui.is-in .b2-sub, .breath-ui.is-out .b2-sub { opacity: 0; }
+
+    /* Practice — graphic-first composition: the enlarged breath visual is the hero; the guiding
+       word sits in its heart (overlapping center), and the controls dock quietly lower down. */
+    .breath-practice { padding: 0; }
+    .bp-hero { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); padding: 0 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .bp-hero .sr-btn { margin-top: 10px; }
+
+    /* time + phase stacked; the time is a small, faint secondary label above the phase,
+       hidden until the session starts then fading in. */
+    .b2-head { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .b2-time { font-family: var(--font-family); font-size: 15px; font-weight: 500; letter-spacing: .06em;
+      font-variant-numeric: tabular-nums; color: var(--sys-primary-container); opacity: .45; transition: opacity .8s ease; }
+    .breath-ui.is-ready .b2-time { opacity: 0; }
+    .b2-play { width: 72px; height: 72px; border-radius: 50%; border: 0; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 10px 34px rgba(5,7,15,0.2);
+      background: var(--sys-primary); color: var(--sys-on-primary); transition: filter .12s; }
+    .b2-play:hover { filter: brightness(1.06); }
+
+    /* ===== Practice = full-screen breathing behind a persistent UI frame =====
+     * The app + card go transparent (transitioned) so the breathing shows through, and
+     * clicks fall through the empty card to the breathing controls — while the nav,
+     * progress and footer stay interactive on top. */
+    .app, .section-wrap, .section-card { transition: background-color .6s ease, box-shadow .6s ease; }
+    .frame.is-practice .app,
+    .frame.is-practice .section-wrap,
+    .frame.is-practice .section-card { background: transparent; transition: background-color 1.4s ease, box-shadow 1.4s ease; }
+    .frame.is-practice .section-card { box-shadow: none; }
+    .frame.is-practice .screen { pointer-events: none; }
+    .frame.is-practice .navbar,
+    .frame.is-practice .section-progress,
+    .frame.is-practice .section-actions { pointer-events: auto; }
+    /* nav transparent so the breathing extends behind it */
+    .frame.is-practice .navbar { background: transparent; border-bottom-color: transparent; }
+    /* the footer + prototype step-nav go transparent too, so the whole screen is papercut */
+    .frame.is-practice .section-actions { border-top-color: transparent; }
+    .frame.is-practice .stepnav { background: transparent; border-top-color: transparent; }
+
+    /* smooth chrome recolor when the breathing goes light↔dark */
+    .navbar, .navbar .nav-item, .crumbs a, .crumbs .c-cur, .crumbs .c-muted, .crumbs .sep,
+    .ptab .lbl, .actions-help { transition: color .5s ease, background .5s ease; }
+    .brandmark path { transition: fill .5s ease; }
+    /* when the breathing is DARK (running in/out), flip the frame chrome to light glass */
+    .frame.is-dark .navbar { background: rgba(255,255,255,0.08); border-bottom-color: rgba(255,255,255,0.16);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+    .frame.is-dark .navbar .nav-item { color: var(--sys-on-primary); }
+    .frame.is-dark .nav-item:hover { background: rgba(255,255,255,0.16); }
+    .frame.is-dark .crumbs a, .frame.is-dark .crumbs .c-cur,
+    .frame.is-dark .crumbs .c-muted, .frame.is-dark .crumbs .sep { color: rgba(255,255,255,0.9); }
+    .frame.is-dark .brandmark path { fill: rgba(255,255,255,0.92); }
+    .frame.is-dark .ptab .lbl { color: rgba(255,255,255,0.6); }
+    .frame.is-dark .ptab.done .lbl, .frame.is-dark .ptab.cur .lbl { color: #fff; }
+    .frame.is-dark .section-actions { border-top-color: rgba(255,255,255,0.18); }
+    .frame.is-dark .actions-help { color: rgba(255,255,255,0.75); }
+    /* filled Continue → white pill so it stays visible on the primary-blue inhale */
+    .frame.is-dark .sr-btn--filled { background: var(--sys-surface-container-lowest); color: var(--sys-primary); }
+    .frame.is-dark .sr-btn--filled:hover { filter: brightness(0.97); }
+
+    /* callout quote */
+    .quote { display: flex; gap: 14px; }
+    .quote .bar { width: 3px; border-radius: 2px; background: var(--sys-primary); flex: none; }
+
+    /* NonSystem mood meter — a playful, relaxing mood check */
+    .mood { display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 4px 0 2px; }
+    .mood-word { font-size: 22px; line-height: 1.2; font-weight: 600; color: var(--sys-on-surface); transition: color .2s ease; }
+    .mood-slider { position: relative; width: 100%; height: 64px; }
+    .mood-track { position: absolute; top: 50%; left: 0; right: 0; height: 16px; transform: translateY(-50%); border-radius: var(--radius-full);
+      background: linear-gradient(90deg, #c9d3e8 0%, #e9e2ec 50%, #ffe1a6 100%); }
+    .mood-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: grab; }
+    .mood-range:active { cursor: grabbing; }
+    .mood-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; border-radius: 50%;
+      background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.16); display: flex; align-items: center; justify-content: center;
+      pointer-events: none; transition: left .1s ease; }
+    .mood-glow { position: absolute; inset: -8px; border-radius: 50%; animation: moodBreathe 3.6s ease-in-out infinite; }
+    @keyframes moodBreathe { 0%, 100% { transform: scale(1); opacity: .45; } 50% { transform: scale(1.18); opacity: .8; } }
+    .mood-scale { display: flex; justify-content: space-between; width: 100%; font-size: var(--label-small-size); color: var(--sys-on-surface-variant); }
+    .ns-note { font-size: 11px; color: var(--sys-on-surface-variant); font-style: italic; }
+
+    /* NonSystem mood FACES (Concept 3 Reflect) — a row of faces; each highlights on hover,
+       the chosen one stays highlighted. */
+    .mfaces { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 4px 0 2px; }
+    .mfaces-row { display: flex; gap: 16px; }
+    .mface { background: transparent; border: 0; padding: 6px; border-radius: 50%; cursor: pointer; line-height: 0;
+      opacity: .4; filter: grayscale(.55); transform: scale(1);
+      transition: opacity .25s ease, filter .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease; }
+    .mface:hover, .mface.hov { opacity: 1; filter: none; transform: scale(1.12); }
+    .mface.sel { opacity: 1; filter: none; transform: scale(1.18); box-shadow: 0 0 0 3px var(--sys-primary); }
+    .mfaces-word { font-size: 22px; line-height: 1.2; font-weight: 600; color: var(--sys-on-surface); min-height: 27px; transition: color .2s ease; }
+    .mfaces-word.ph { font-size: 16px; font-weight: 400; color: var(--sys-on-surface-variant); }
+    .mfaces-scale { display: flex; justify-content: space-between; width: 100%; font-size: var(--label-small-size); color: var(--sys-on-surface-variant); }
+
+    /* Reflect slider (Concept 3) — a white thumb on a soft track; the papercut warms as it moves */
+    .rslider { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .rslider-track { position: relative; width: 100%; height: 8px; border-radius: var(--radius-full); background: rgba(7,15,54,0.14); }
+    .rslider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; border-radius: 50%;
+      background: var(--sys-surface-container-lowest); box-shadow: 0 6px 18px rgba(5,7,15,0.22); pointer-events: none; transition: left .06s linear; }
+    .rslider input[type=range] { position: absolute; inset: -13px 0; width: 100%; height: 34px; margin: 0; opacity: 0; cursor: grab; }
+    .rslider input[type=range]:active { cursor: grabbing; }
+    .rslider-scale { display: flex; justify-content: space-between; width: 100%; font-size: var(--label-small-size); color: var(--sys-primary-container); opacity: .6; }
+    /* extra breathing room between the title and the slider */
+    .reflect-ui .rslider { margin-top: 26px; }
+    /* the expressive face above the title (mirrors the slider) gets a soft lift */
+    .reflect-ui .b2-center > svg { filter: drop-shadow(0 10px 22px rgba(5,7,15,0.14)); }
+
+    /* Homework (Concept 3) — immersive: big title + DS description + the 3 cue options */
+    /* Homework (Concept 3) — immersive: big title + DS description + the 3 cue options.
+       Options are sized to match the enlarged Done recap panel (same 600px width, roomy cards). */
+    .home-head { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 560px; }
+    .home-desc { margin: 0; font-size: var(--body-large-size); line-height: var(--body-large-lh); color: var(--sys-primary-container); opacity: .72; text-align: center; }
+    /* stretch the center so the 600px-wide options aren't collapsed by the short title */
+    .home-ui .b2-center { align-self: stretch; }
+    .home-options { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 600px; margin: 0 auto; }
+    .home-options .selcard { padding: 22px 28px; min-height: 76px; border-radius: var(--radius-lg); gap: 18px; }
+    .home-options .selcard .txt { font-size: var(--body-large-size); line-height: var(--body-large-lh); }
+
+    /* Done (Concept 3) — same immersive papercut frame as Practice/Reflect: a check medallion,
+       the closing affirmation, and a translucent recap panel that sits on the papercut. */
+    .done-ui .b2-phase { max-width: 760px; text-wrap: balance; }
+    .done-ui .b2-center { padding-left: 12px; padding-right: 12px; }
+    .done-recap { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 22px;
+      padding: 34px 40px; border-radius: var(--radius-lg); text-align: left;
+      background: rgba(255,255,255,0.5); border: var(--stroke-thin) solid rgba(255,255,255,0.6);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 14px 40px rgba(5,7,15,0.12); }
+    .done-row { display: flex; flex-direction: column; gap: 6px; }
+    .done-label { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase; color: var(--sys-primary-container); opacity: .7; }
+    .done-val { font-size: var(--body-large-size); line-height: var(--body-large-lh); color: var(--sys-primary-container); }
+    .done-div { height: var(--stroke-thin); background: rgba(7,15,54,0.12); }
+
+    /* Intro (Concept 3) — Apple-style hero. Two scannable zones: the MESSAGE (accent eyebrow +
+       hero title + one-line subhead, grouped tight) and the ACTION (CTA + a quiet reassurance
+       caption). The shared 44px b2-center gap holds the two zones apart; tight internal gaps
+       bind each into a single unit — so the eye reads message → action with no competing pills. */
+    .intro-head { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    /* shared Apple-style eyebrow — an accent label sitting tight above a step title (Intro, Learn) */
+    .step-kicker { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); font-weight: 600;
+      letter-spacing: .18em; text-transform: uppercase; color: var(--sys-primary); }
+    .intro-ui .b2-phase { max-width: 680px; text-wrap: balance; }
+    .intro-lede { margin: 6px 0 0; max-width: 470px; font-size: var(--body-large-size); line-height: var(--body-large-lh);
+      color: var(--sys-primary-container); opacity: .66; text-align: center; text-wrap: balance; }
+    /* fine-print meta line (à la Apple's price line): small text, but wrapped in a soft glass pill
+       for a touch more prominence. Same font size — only a container fill is added. */
+    .intro-meta { margin-top: 14px; display: inline-flex; align-items: center; padding: 7px 16px;
+      border-radius: var(--radius-full); background: rgba(255,255,255,0.55);
+      border: var(--stroke-thin) solid rgba(255,255,255,0.65);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      font-size: var(--label-medium-size); line-height: var(--label-medium-lh);
+      letter-spacing: .01em; color: var(--sys-primary-container); opacity: .8; }
+    /* Intro actions — primary CTA with a lighter Go Back stacked beneath it */
+    .intro-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+    /* Learn (Concept 3) — immersive: title + lede + a row of 3 glass "pattern" cards.
+       The count (4 / 6) is the hero of each card — an Apple-clean, legible rhythm. */
+    .learn-ui .b2-center { align-self: stretch; }
+    .learn-head { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 620px; margin: 0 auto; }
+    .learn-lede { margin: 0; font-size: var(--body-large-size); line-height: var(--body-large-lh);
+      color: var(--sys-primary-container); opacity: .8; text-align: center; text-wrap: balance; }
+    .learn-steps { display: flex; flex-wrap: nowrap; gap: 14px; width: 100%; max-width: 940px; margin: 0 auto; }
+    .learn-card { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+      padding: 24px 22px 26px; border-radius: var(--radius-lg); text-align: left;
+      background: rgba(255,255,255,0.5); border: var(--stroke-thin) solid rgba(255,255,255,0.6);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 14px 40px rgba(5,7,15,0.12);
+      /* the cards reveal AFTER the head has settled, then stagger in left→right — a gentle Apple-style
+         fade + rise on a smooth decelerating ease. Slow duration + wider stagger for a calm cascade. */
+      animation: learnCardIn 1.15s cubic-bezier(.16,1,.3,1) both; }
+    .learn-card:nth-child(1) { animation-delay: .6s; }
+    .learn-card:nth-child(2) { animation-delay: .84s; }
+    .learn-card:nth-child(3) { animation-delay: 1.08s; }
+    .learn-card:nth-child(4) { animation-delay: 1.32s; }
+    @keyframes learnCardIn { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+    /* ============================================================
+       Breath visuals (Concept 3) — a set of calming breathing animations you can filter between
+       on Practice to compare. Each swells on the in-breath and settles on the out-breath, paced to
+       the 4s/6s timer via inline transitions. They sit behind the phase text on the papercut.
+       ============================================================ */
+    /* the visual is the hero — scaled up large so it dominates the screen and bleeds toward the edges */
+    .breath-visual { position: absolute; inset: 0; z-index: 0; transform: scale(1.62); transform-origin: center 47%;
+      animation: bvFadeIn 1s ease both; transition: filter .9s ease; }
+    @keyframes bvFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* before the session starts (and while paused) the effect is dimmed for text contrast; it
+       returns to full saturation once breathing is under way. (filter, so the fade-in still works) */
+    .breath-visual.is-dim { filter: brightness(.6) saturate(.72) opacity(.62); }
+    .vis { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .vis > * { position: absolute; }
+
+    /* Aura — a luminous layered orb that brightens and expands as you breathe in */
+    .aura-l { border-radius: 50%; width: 300px; height: 300px; will-change: transform, opacity; }
+    .aura-core { background: radial-gradient(circle, rgba(255,255,255,.96), rgba(150,190,255,.55) 55%, rgba(130,170,245,0) 72%); filter: blur(4px); }
+    .aura-mid  { background: radial-gradient(circle, rgba(160,200,255,.55), rgba(120,165,240,0) 70%); filter: blur(22px); }
+    .aura-out  { background: radial-gradient(circle, rgba(120,165,240,.4), rgba(120,165,240,0) 70%); filter: blur(46px); }
+
+    /* Ripple — concentric rings that scale with the breath, plus a gentle constant emanation */
+    .rip-wrap, .orbit-wrap, .bloom-wrap { position: absolute; width: 0; height: 0; display: flex; align-items: center; justify-content: center; }
+    .rip { border-radius: 50%; border: 2px solid rgba(50,105,205,.55); }
+    .rip.r1 { width: 130px; height: 130px; }
+    .rip.r2 { width: 230px; height: 230px; opacity: .78; }
+    .rip.r3 { width: 330px; height: 330px; opacity: .58; }
+    .rip.r4 { width: 440px; height: 440px; opacity: .38; }
+    .rip-core { width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.92), rgba(150,190,255,.45) 70%, transparent); filter: blur(2px); }
+    .rip-pulse { width: 130px; height: 130px; border-radius: 50%; border: 2px solid rgba(50,105,205,.4); animation: ripPulse 6.5s ease-out infinite; }
+    .rip-pulse.d2 { animation-delay: 3.25s; }
+    @keyframes ripPulse { 0% { transform: scale(.42); opacity: .55; } 100% { transform: scale(3.4); opacity: 0; } }
+
+    /* Bloom — a radial mandala whose petals open on the in-breath */
+    .petal { position: absolute; top: 50%; left: 50%; width: 66px; height: 128px; border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+      background: linear-gradient(180deg, rgba(108,158,242,.82), rgba(60,112,208,.5)); will-change: transform; }
+    .bloom-core { position: absolute; top: 50%; left: 50%; width: 66px; height: 66px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95), rgba(155,198,255,.5) 70%, transparent); filter: blur(1px); }
+
+    /* Aurora — soft drifting mesh-gradient clouds that swell with the breath */
+    .aur-blob { width: 400px; height: 400px; border-radius: 50%; filter: blur(62px); will-change: transform, translate; }
+    .aur-blob.b1 { background: radial-gradient(circle, rgba(90,150,255,.85), transparent 68%); animation: aurDrift1 17s ease-in-out infinite; }
+    .aur-blob.b2 { background: radial-gradient(circle, rgba(110,215,230,.7), transparent 68%); animation: aurDrift2 21s ease-in-out infinite; }
+    .aur-blob.b3 { background: radial-gradient(circle, rgba(165,150,255,.62), transparent 68%); animation: aurDrift3 25s ease-in-out infinite; }
+    @keyframes aurDrift1 { 0%,100% { translate: -46px -34px; } 50% { translate: 40px 28px; } }
+    @keyframes aurDrift2 { 0%,100% { translate: 44px -30px; } 50% { translate: -38px 34px; } }
+    @keyframes aurDrift3 { 0%,100% { translate: -20px 44px; } 50% { translate: 26px -40px; } }
+
+    /* Orbit — a constellation ring that expands on the in-breath, with a gentle twinkle */
+    .odot { position: absolute; top: 50%; left: 50%; width: 15px; height: 15px; border-radius: 50%; background: radial-gradient(circle, #7db0ff, #2f6fd0);
+      box-shadow: 0 0 16px rgba(55,115,215,.6); animation: odotTwinkle 4.5s ease-in-out infinite; }
+    .orbit-core { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.9), rgba(150,190,255,.32) 70%, transparent); filter: blur(1px); }
+    @keyframes odotTwinkle { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+    /* Dark-field visuals (Nebula, Particles) bring their own deep backdrop so the neon reads; the
+       chrome flips to light glass (.frame.is-dark) and the phase text goes light. */
+    .bvis-dark-bg { position: absolute; inset: 0; z-index: 0; animation: bvFadeIn 1s ease both;
+      background: radial-gradient(circle at 50% 44%, #10142b 0%, #070a18 55%, #03040b 100%); }
+    .frame.is-dark .b2-phase { color: #fff; text-shadow: 0 2px 30px rgba(0,0,0,.55); }
+    .frame.is-dark .b2-sub { color: rgba(255,255,255,.72); }
+    .frame.is-dark .b2-time { color: rgba(255,255,255,.6); }
+
+    /* Glow — an original liquid gradient orb rendered with a WebGL shader (domain-warped fractal
+       noise) for true flowing, wispy motion. A soft CSS gradient sits behind as a no-WebGL fallback.
+       A light-field visual. (Inspired by, not copied from, stock art.) */
+    .glow { position: absolute; width: 360px; height: 360px; }
+    .glow-halo { position: absolute; inset: -58px; border-radius: 50%; filter: blur(46px);
+      background: radial-gradient(circle, rgba(60,140,255,.5), rgba(70,120,235,.3) 55%, transparent 72%); }
+    /* a seated shadow beneath the orb so it separates from the pale papercut */
+    .glow-shadow { position: absolute; inset: 18px; border-radius: 50%; box-shadow: 0 22px 54px rgba(10,38,100,.34); }
+    .glow-orb { position: absolute; inset: 0; border-radius: 50%; /* static fallback base */
+      background: linear-gradient(150deg, #2e7be0 0%, #5aa6ff 45%, #1f5cc0 100%); }
+    .glow-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* Particles — an original volumetric particle-sphere built with real CSS 3D transforms: points
+       on a Fibonacci sphere, gently spinning; nearer points render larger via perspective. */
+    .ps-perspective { perspective: 1100px; }
+    .ps-spin { position: absolute; top: 50%; left: 50%; width: 0; height: 0; transform-style: preserve-3d;
+      animation: psSpin 30s linear infinite; }
+    .pdot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; will-change: transform; }
+    @keyframes psSpin { to { transform: rotateY(360deg); } }
+    /* fade particles out through the center so they don't clutter the title/description/button */
+    .ps-fog { position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, #0d1126 0px, #0d1126 66px, rgba(13,17,38,0) 205px); }
+
+    /* Particles 2 — the light-mode, on-brand sibling. Same volumetric Fibonacci sphere, but rendered
+       in ComPsych blues (deep navy → brand blue → sky) on the papercut background (no dark field), so
+       the navy chrome/text stays. A soft light haze clears the center for the title/description/button. */
+    .pdot2 { position: absolute; top: 50%; left: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; will-change: transform; }
+    .ps2-haze { position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(248,251,255,.95) 0px, rgba(248,251,255,.86) 64px, rgba(248,251,255,0) 205px); }
+
+    /* Breath-visual picker (comparison shell) — a floating glass segmented control on Practice */
+    .bvis-picker { position: fixed; top: 150px; left: 50%; transform: translateX(-50%); z-index: 6;
+      width: max-content; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+    .bvis-label { font-size: var(--label-small-size); line-height: var(--label-small-lh); font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase; color: var(--sys-primary-container); opacity: .5; }
+    .frame.is-dark .bvis-label { color: rgba(255,255,255,.6); opacity: 1; }
+    .bvis-seg { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 5px; border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.62); border: var(--stroke-thin) solid rgba(255,255,255,0.65);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(5,7,15,.12); }
+    .bvis-btn { border: 0; background: transparent; cursor: pointer; height: 32px; padding: 0 16px; border-radius: var(--radius-full);
+      font-family: var(--font-family); font-size: var(--label-medium-size); font-weight: 500;
+      color: var(--sys-primary-container); opacity: .65; transition: background .15s, color .15s, opacity .15s; }
+    .bvis-btn:hover { opacity: 1; background: rgba(7,15,54,.05); }
+    .bvis-btn.on { background: var(--sys-primary); color: var(--sys-on-primary); opacity: 1; }
+    .learn-num { display: flex; align-items: center; height: 52px; font-size: 48px; line-height: 1; font-weight: 500;
+      letter-spacing: -0.02em; color: var(--sys-primary-container); font-variant-numeric: tabular-nums; }
+    .learn-num svg { color: var(--sys-primary-container); }
+    .learn-k { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--sys-primary-container); opacity: .58; }
+    .learn-copy { margin: 6px 0 0; font-size: var(--body-medium-size); line-height: var(--body-medium-lh);
+      color: var(--sys-primary-container); opacity: .82; }
+
+    /* ============================================================
+       Solving the Problem (Immersion) — the Practice step is an INPUT flow rather than a breathing
+       exercise, so it floats a frosted glass "workspace" on the papercut with an ambient glow behind
+       it. Everything else (Intro/Learn/Reflect/Homework/Done) reuses the shared immersion classes.
+       ============================================================ */
+    .solve-ui .b2-center { align-self: stretch; }
+    .solve-head { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 600px; margin: 0 auto; }
+    /* cross-dissolve between the two Practice sub-stages (Define ↔ Brainstorm) */
+    .solve-stage { display: flex; flex-direction: column; align-items: center; gap: 44px; width: 100%;
+      transition: opacity .24s ease; }
+    .solve-stage.in { opacity: 1; } .solve-stage.out { opacity: 0; }
+
+    /* frosted glass workspace panel — the form sits on it so inputs stay legible over the papercut */
+    .solve-panel { width: 100%; max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
+      padding: 30px 34px; border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.55); border: var(--stroke-thin) solid rgba(255,255,255,0.65);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 18px 46px rgba(5,7,15,0.14); }
+    /* the glass panel IS the field — the textarea blends into it (no nested box) */
+    .solve-panel .sr-textarea { min-height: 120px; background: transparent; border: 0; padding: 0; box-shadow: none;
+      resize: none; font-size: var(--body-large-size); line-height: var(--body-large-lh); }
+    .solve-panel .sr-textarea:focus { border: 0; box-shadow: none; }
+    /* the larger 20px field reads stronger at the same opacity, so fade it a touch more to match
+       the 16px Brainstorm placeholders */
+    .solve-panel .sr-textarea::placeholder { color: var(--sys-on-surface-variant); opacity: .4; }
+
+    /* Brainstorm — the named problem recapped in the Utility "Your stressor" box (muted Card +
+       ex-recap label), constrained to align with the idea rows below. */
+    .solve-recap { width: 100%; max-width: 620px; margin: 0 auto; text-align: left; }
+    .solve-lines { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 620px; margin: 0 auto; }
+    /* each idea row is a full-width field with its number as a leading icon INSIDE the box, so every
+       box (the "Your stressor" recap above + these three) shares the same left/right edges */
+    .solve-line { position: relative; width: 100%;
+      /* each idea row rises in after the head settles, staggered like the Learn cards */
+      animation: learnCardIn 1s cubic-bezier(.16,1,.3,1) both; }
+    .solve-line:nth-child(1) { animation-delay: .5s; }
+    .solve-line:nth-child(2) { animation-delay: .68s; }
+    .solve-line:nth-child(3) { animation-delay: .86s; }
+    .solve-num { position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: var(--body-medium-size); font-weight: 400; font-variant-numeric: tabular-nums;
+      color: var(--sys-primary); pointer-events: none; }
+    .solve-line .sr-input { width: 100%; padding-left: 46px; text-align: left;
+      background: rgba(255,255,255,0.92); border-color: rgba(255,255,255,0.7); }
+    /* example prompts read as clearly optional hint text — DS placeholder color, softened */
+    .solve-line .sr-input::placeholder { color: var(--sys-on-surface-variant); opacity: .5; }
+
+    /* Homework — numbered badge in the selection-card lead slot */
+    .opt-badge { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center;
+      justify-content: center; font-size: var(--label-large-size); font-weight: 600; font-variant-numeric: tabular-nums;
+      background: var(--sys-primary-fixed-dim); color: var(--sys-primary); }
+    .home-options .selcard.sel .opt-badge { background: var(--sys-primary); color: var(--sys-on-primary); }
+
+    /* Ambient "ideas taking form" glow — soft, blurred brand orbs drifting behind the glass panel.
+       On Brainstorm each orb brightens as its idea is written. Purely decorative (authored from
+       scratch, not stock art); low-opacity + heavily blurred so the panel text always stays crisp. */
+    .solve-amb { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .amb-blob { position: absolute; width: 340px; height: 340px; border-radius: 50%; filter: blur(66px);
+      opacity: 0; transition: opacity 1s ease; will-change: transform; }
+    .amb-blob.dim { opacity: .16; } .amb-blob.show { opacity: .5; }
+    .amb-c  { width: 420px; height: 420px; left: calc(50% - 210px); top: calc(50% - 210px);
+      background: radial-gradient(circle, rgba(90,150,255,.8), transparent 68%); animation: ambDrift1 18s ease-in-out infinite; }
+    .amb-o0 { left: calc(50% - 360px); top: calc(50% - 120px);
+      background: radial-gradient(circle, rgba(90,150,255,.85), transparent 68%); animation: ambDrift1 18s ease-in-out infinite; }
+    .amb-o1 { left: calc(50% - 170px); top: calc(50% - 220px);
+      background: radial-gradient(circle, rgba(110,205,230,.8), transparent 68%); animation: ambDrift2 22s ease-in-out infinite; }
+    .amb-o2 { left: calc(50% + 30px); top: calc(50% - 90px);
+      background: radial-gradient(circle, rgba(255,205,120,.72), transparent 68%); animation: ambDrift3 26s ease-in-out infinite; }
+    @keyframes ambDrift1 { 0%,100% { transform: translate(-30px,-20px); } 50% { transform: translate(30px,26px); } }
+    @keyframes ambDrift2 { 0%,100% { transform: translate(28px,-24px); } 50% { transform: translate(-26px,28px); } }
+    @keyframes ambDrift3 { 0%,100% { transform: translate(-16px,30px); } 50% { transform: translate(22px,-28px); } }
+
+    /* ---- Grounding (Immersion) — glowing "notice" orbs on the papercut ---- */
+    .ground-ui .b2-center { gap: 40px; }
+    .grd-orbs { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+    .grd-orb { width: 74px; height: 74px; flex: none; border-radius: 50%; padding: 0; cursor: pointer; position: relative;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.5); border: 1.5px solid rgba(255,255,255,0.7);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 8px 22px rgba(5,7,15,.1);
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease, background .3s ease, border-color .3s ease; }
+    .grd-orb:hover { transform: scale(1.06); border-color: rgba(255,255,255,.95); }
+    .grd-orb-core { width: 26px; height: 26px; border-radius: 50%; background: rgba(7,92,186,.22); transition: all .3s ease; }
+    .grd-orb.on { background: radial-gradient(circle at 34% 30%, #d4e8ff, #6fa8e8); border-color: rgba(255,255,255,.92);
+      box-shadow: 0 0 30px rgba(90,150,255,.6), 0 10px 26px rgba(5,7,15,.16); transform: scale(1.08); }
+    .grd-orb.on .grd-orb-core { background: #fff; box-shadow: 0 0 16px rgba(255,255,255,.95); }
+    .grd-note { margin: 0; font-size: var(--body-large-size); line-height: var(--body-large-lh);
+      color: var(--sys-primary-container); opacity: .72; min-height: 30px; transition: opacity .3s ease, color .3s ease; }
+    .grd-note.done { color: var(--sys-primary); opacity: 1; font-weight: 500; }
+    /* type-what-you-notice fields (replaces the tap orbs) */
+    .ground-ui { overflow-y: auto; }
+    .ground-ui .grd-fields { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 520px; margin: 0 auto; }
+    .ground-ui .grd-input { background: rgba(255,255,255,0.88); border-color: rgba(255,255,255,0.7); text-align: center; }
+    .ground-ui .grd-input::placeholder { color: var(--sys-on-surface-variant); opacity: .5; }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--radius-full); background: var(--state-primary-08); color: var(--sys-primary); font-size: var(--label-small-size); font-weight: 600; }
+    .medallion { width: 56px; height: 56px; border-radius: 50%; background: var(--state-primary-08); display: flex; align-items: center; justify-content: center; color: var(--sys-primary); }
+    .medallion.solid { background: var(--sys-primary); color: var(--sys-on-primary); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/jsx-source" id="app-src">
+const { useState } = React;
+
+/* ============================================================
+ * Icons — minimal inline set. In the real system these are
+ * INSTANCE_SWAP slots on the components; swapped here as SVG.
+ * ============================================================ */
+const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke}
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
+);
+const IcChevL  = (p) => <Icon {...p} d={<polyline points="15 18 9 12 15 6" />} />;
+const IcArrowR  = (p) => <Icon {...p} d={<><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>} />;
+const IcArrowUR = (p) => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></>} />;
+const IcCheck   = (p) => <Icon {...p} d={<polyline points="20 6 9 17 4 12" />} />;
+
+/* Header icons — exact glyphs exported from the GuidanceResources Figma
+ * (Lucide menu / search / bell / file-user), viewBox 0 0 20 20. */
+const FigIcon = ({ children, size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"
+       stroke="currentColor" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+);
+const IcMenu     = (p) => <FigIcon {...p}><path d="M3.33333 4.16667H16.6667M3.33333 10H16.6667M3.33331 15.8333H16.6666" /></FigIcon>;
+const IcSearch   = (p) => <FigIcon {...p}><path d="M17.5 17.5L13.8833 13.8833M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" /></FigIcon>;
+const IcBell     = (p) => <FigIcon {...p}><path d="M8.55667 17.5C8.70295 17.7533 8.91335 17.9637 9.1667 18.11C9.42006 18.2563 9.70745 18.3333 10 18.3333C10.2925 18.3333 10.5799 18.2563 10.8333 18.11C11.0867 17.9637 11.297 17.7533 11.4433 17.5M2.71833 12.7717C2.60947 12.891 2.53763 13.0394 2.51155 13.1988C2.48546 13.3582 2.50627 13.5217 2.57142 13.6695C2.63658 13.8173 2.74328 13.943 2.87855 14.0312C3.01381 14.1195 3.17182 14.1665 3.33333 14.1667H16.6667C16.8282 14.1667 16.9862 14.1199 17.1216 14.0318C17.2569 13.9437 17.3637 13.8181 17.4291 13.6704C17.4944 13.5227 17.5154 13.3592 17.4895 13.1998C17.4637 13.0404 17.392 12.892 17.2833 12.7725C16.175 11.63 15 10.4158 15 6.66667C15 5.34058 14.4732 4.06881 13.5355 3.13113C12.5979 2.19345 11.3261 1.66667 10 1.66667C8.67392 1.66667 7.40215 2.19345 6.46447 3.13113C5.52678 4.06881 5 5.34058 5 6.66667C5 10.4158 3.82417 11.63 2.71833 12.7717Z" /></FigIcon>;
+const IcFileUser = (p) => <FigIcon {...p}><path d="M11.6667 1.66667H5C4.55797 1.66667 4.13405 1.84226 3.82149 2.15482C3.50893 2.46738 3.33333 2.89131 3.33333 3.33333V16.6667C3.33333 17.1087 3.50893 17.5326 3.82149 17.8452C4.13405 18.1577 4.55797 18.3333 5 18.3333H15C15.442 18.3333 15.866 18.1577 16.1785 17.8452C16.4911 17.5326 16.6667 17.1087 16.6667 16.6667V6.66667M11.6667 1.66667C11.9305 1.66624 12.1917 1.718 12.4354 1.81897C12.6791 1.91995 12.9005 2.06813 13.0867 2.255L16.0767 5.245C16.264 5.43126 16.4126 5.65279 16.5139 5.8968C16.6152 6.14082 16.6671 6.40247 16.6667 6.66667M11.6667 1.66667V5.83333C11.6667 6.05435 11.7545 6.26631 11.9107 6.42259C12.067 6.57887 12.279 6.66667 12.5 6.66667L16.6667 6.66667M13.3333 18.3333C13.3333 17.4493 12.9821 16.6014 12.357 15.9763C11.7319 15.3512 10.8841 15 10 15M10 15C9.11594 15 8.2681 15.3512 7.64298 15.9763C7.01786 16.6014 6.66667 17.4493 6.66667 18.3333M10 15C11.3807 15 12.5 13.8807 12.5 12.5C12.5 11.1193 11.3807 10 10 10C8.61929 10 7.5 11.1193 7.5 12.5C7.5 13.8807 8.61929 15 10 15Z" /></FigIcon>;
+
+/* DS wind glyph (Lucide "wind") — the breathing / air motif for this module. */
+const IcWind = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+       stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12.8 19.6A2 2 0 1 0 14 16H2" />
+    <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" />
+    <path d="M9.8 4.4A2 2 0 1 1 11 8H2" />
+  </svg>
+);
+const IcPlus   = (p) => <Icon {...p} d={<><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></>} />;
+const IcInfo   = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="8"/></>} />;
+const IcArrowDown = (p) => <Icon {...p} d={<><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></>} />;
+const IcArrowUp   = (p) => <Icon {...p} d={<><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></>} />;
+const IcRepeat = (p) => <Icon {...p} d={<><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>} />;
+const IcClock  = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></>} />;
+const IcPlay      = (p) => <Icon {...p} fill="currentColor" stroke="none" d={<polygon points="7 4 20 12 7 20 7 4" />} />;
+const IcPause     = (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></>} />;
+const IcChevDown  = (p) => <Icon {...p} d={<polyline points="6 9 12 15 18 9" />} />;
+const IcMusic     = (p) => <Icon {...p} d={<><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></>} />;
+const IcHeart  = (p) => <Icon {...p} d={<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>} />;
+
+// ComPsych swoosh — real 3-arc mark exported from the GuidanceResources Figma
+// (breadcrumb Logo, Path 3382/3383/3384), composed via nested SVGs, filled primary-container.
+const CompsychMark = () => (
+  <svg width="24" height="17.6" viewBox="0 0 23.06 16.886" fill="var(--sys-primary-container)" xmlns="http://www.w3.org/2000/svg" aria-label="ComPsych">
+    <svg x="0" y="0" width="23.06" height="15.584" viewBox="0 0 24 15.6895">
+      <path d="M11.9972 5.48972C14.8709 5.44427 17.6505 6.48269 19.7491 8.38578C21.8476 10.2889 23.101 12.9077 23.2447 15.6895C23.921 13.9306 24.1479 12.0393 23.9061 10.177C23.6643 8.31474 22.9609 6.53685 21.856 4.99523C20.7511 3.4536 19.2776 2.19406 17.5613 1.3242C15.845 0.454337 13.9369 0 12 0C10.0631 0 8.15503 0.454337 6.43872 1.3242C4.7224 2.19406 3.24886 3.4536 2.14398 4.99523C1.0391 6.53685 0.335709 8.31474 0.0938929 10.177C-0.147923 12.0393 0.0790229 13.9306 0.755345 15.6895C0.899154 12.9088 2.15186 10.291 4.2492 8.38819C6.34655 6.48541 9.12455 5.44646 11.9972 5.4905V5.48972Z" />
+    </svg>
+    <svg x="1.582" y="6.319" width="19.889" height="9.998" viewBox="0 0 20.6998 10.066">
+      <path d="M10.3487 0.00169587C7.65891 -0.0460333 5.05927 0.941494 3.11947 2.74788C1.17967 4.55426 0.0579042 7.03217 0 9.63861C0 9.78184 0.00399474 9.92429 0.0111847 10.066C0.573608 9.2118 1.26546 8.44452 2.06351 7.78989C4.38906 5.91715 7.32684 4.90826 10.3503 4.94402C13.3738 4.90812 16.3116 5.91703 18.6371 7.78989C19.4348 8.44484 20.1266 9.21207 20.6894 10.066C20.6958 9.92429 20.6998 9.78184 20.6998 9.63861C20.6419 7.03176 19.5198 4.55349 17.5795 2.74704C15.6392 0.940594 13.0389 -0.0466553 10.3487 0.00169587Z" />
+    </svg>
+    <svg x="2.264" y="12.09" width="18.527" height="4.796" viewBox="0 0 19.2818 4.82726">
+      <path d="M9.6409 0.00415971C7.74432 -0.0466691 5.86536 0.369028 4.17945 1.21245C2.49354 2.05587 1.05565 3.29951 0 4.82726H19.2818C18.2262 3.29951 16.7883 2.05587 15.1023 1.21245C13.4164 0.369028 11.5375 -0.0466691 9.6409 0.00415971Z" />
+    </svg>
+  </svg>
+);
+
+/* ============================================================
+ * Sunrise components — each maps to a published component.
+ * ============================================================ */
+
+// Component: Button
+function Button({ variant = "filled", leadingIcon, trailingIcon, children, onClick, disabled }) {
+  return (
+    <button className={`sr-btn sr-btn--${variant}`} onClick={onClick} disabled={disabled}>
+      {leadingIcon}{children}{trailingIcon}
+    </button>
+  );
+}
+
+// Component: Input Field
+function InputField({ label, help, placeholder, multiline, rows = 4, value, onChange }) {
+  return (
+    <div className="sr-field">
+      {label && <label className="sr-flabel">{label}</label>}
+      {help && <span className="sr-fhelp">{help}</span>}
+      {multiline
+        ? <textarea className="sr-textarea" rows={rows} placeholder={placeholder} value={value} onChange={onChange} />
+        : <input className="sr-input" placeholder={placeholder} value={value} onChange={onChange} />}
+    </div>
+  );
+}
+
+// Component: Divider
+const Divider = () => <hr className="sr-divider" />;
+
+// Component: Card
+function Card({ muted, children, style }) {
+  return <div className={"sr-card" + (muted ? " sr-card--muted" : "")} style={style}>{children}</div>;
+}
+
+// Component: Card Item / Style=Image — hero media card (branded gradient fill)
+function HeroCard({ icon, title, subtitle, chip }) {
+  return (
+    <div className="herocard">
+      <div className="hc-media" />
+      <div className="hc-content">
+        <div className="hc-top">
+          <span className="hc-icon">{icon}</span>
+          {chip && <span className="hc-chip">{chip}</span>}
+        </div>
+        <div className="hc-text">
+          <p className="hc-title">{title}</p>
+          {subtitle && <p className="hc-desc">{subtitle}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Component: Selection Card (from Selection Card Group) — selectable row
+function SelectionCard({ selected, leadingIcon, placeholder, text, onClick }) {
+  const empty = !text || !text.trim();
+  return (
+    <button className={"selcard" + (selected ? " sel" : "")} onClick={onClick}>
+      {leadingIcon && <span className="lead">{leadingIcon}</span>}
+      <span className={"txt" + (empty ? " ph" : "")}>{empty ? placeholder : text}</span>
+      <span className="check"><IcCheck size={14} /></span>
+    </button>
+  );
+}
+
+// Component: Progress Tracker — underline step-tabs
+function ProgressTracker({ steps, current }) {
+  return (
+    <div className="ptrack">
+      {steps.map((s, i) => (
+        <div key={s.label} className={"ptab " + (i < current ? "done" : i === current ? "cur" : "")}>
+          <span className="lbl">{s.label}</span>
+          <span className="bar" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Component: Header Navigation (+ Menu, Breadcrumb w/ Logo, Icon Buttons, emergency Button)
+function HeaderNav() {
+  return (
+    <div className="navbar">
+      <div className="nav-left">
+        <button className="nav-item" aria-label="Menu"><IcMenu size={20} /></button>
+        <nav className="crumbs" aria-label="Breadcrumb">
+          <span className="crumb"><span className="brandmark"><CompsychMark /></span></span>
+          <span className="sep">/</span>
+          <a href="#" onClick={e=>e.preventDefault()} className="crumb c-muted">CCBT</a>
+          <span className="sep">/</span>
+          <a href="#" onClick={e=>e.preventDefault()} className="crumb c-muted">Stress</a>
+          <span className="sep">/</span>
+          <span className="crumb c-cur">Grounding</span>
+        </nav>
+      </div>
+      <div className="nav-right">
+        <div className="icon-buttons">
+          <button className="nav-item" aria-label="Search"><IcSearch size={20} /></button>
+          <button className="nav-item" aria-label="Notifications"><IcBell size={20} /><span className="badge">3</span></button>
+          <button className="nav-item" aria-label="My cases"><IcFileUser size={20} /></button>
+          <button className="nav-item" aria-label="Account"><span className="nav-avatar">CP</span></button>
+        </div>
+        <button className="emergency"><span className="dot"><IcPlus size={12} /></span>Having a Critical Emergency?</button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+ * Content Section Template — the white card shell that wraps
+ * Progress + Title/Content + Actions.
+ * ============================================================ */
+function ContentSectionTemplate({ steps, current, children, actions, whole, contentKey, leaving }) {
+  return (
+    <div className="section-wrap">
+      <div className="section-card">
+        <div className="section-progress">
+          <ProgressTracker steps={steps} current={current} />
+        </div>
+        <div className="section-body">
+          <div className={"col" + (whole ? " col--whole" : "") + (leaving ? " col--leaving" : "")} key={contentKey}>{children}</div>
+        </div>
+        <div className="section-actions">{actions}</div>
+      </div>
+    </div>
+  );
+}
+
+// Title block (headline + optional eyebrow + description)
+function Title({ eyebrow, title, children }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+      <h1 className="sr-headline-s" style={{ color: "var(--sys-primary-container)" }}>{title}</h1>
+      {children && <p className="sr-body-m" style={{ margin: "4px 0 0", color: "var(--sys-on-surface-variant)" }}>{children}</p>}
+    </div>
+  );
+}
+
+/* ============================================================
+ * Module screens — "In-the-Moment Reset" (paced breathing).
+ * Copy verbatim / adapted from the Proposed Spec: "PACED BREATHING"
+ * (Module 1 acute tool) — your first in-the-moment tool.
+ * ============================================================ */
+
+// Screen 1 — Orientation
+function Orientation() {
+  return (
+    <>
+      <Title eyebrow="Stress Program · Acute Toolkit" title="In-the-Moment Reset">
+        When stress spikes, you don't need a quiet room or ten minutes. One minute of slow, paced
+        breathing — with a longer out-breath than in-breath — is the signal that tells your nervous
+        system it's safe to settle. Use it the second you feel stress rising: before a meeting, in
+        traffic, after a tough email.
+      </Title>
+      <HeroCard
+        icon={<IcWind size={32} />}
+        title="Down-shift in about a minute"
+        subtitle="A guided paced-breathing reset"
+        chip="About 1 min · Acute toolkit"
+      />
+    </>
+  );
+}
+
+// Screen 2 — Psychoeducation
+function Psychoeducation() {
+  return (
+    <>
+      <Title eyebrow="Learn" title="Why the out-breath matters">
+        Slow, paced breathing is your first in-the-moment tool. The key is a longer out-breath than
+        in-breath — that longer exhale is what tells your nervous system it's safe to settle. No
+        setup needed; start with just one minute.
+      </Title>
+      <div>
+        <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The pattern — in 4, out 6</span>
+        <div className="ex-grid ex-grid--3">
+          {[
+            { icon: <IcArrowDown size={20} />, step: "Step 1 · Inhale",  copy: "Breathe in gently through your nose for a count of 4." },
+            { icon: <IcArrowUp size={20} />,   step: "Step 2 · Exhale",  copy: "Breathe out slowly through your mouth for a count of 6." },
+            { icon: <IcRepeat size={20} />,    step: "Step 3 · Repeat",  copy: "Keep going for about a minute — roughly six breaths a minute." },
+          ].map((b, i) => (
+            <div className="ex-box" key={i}>
+              <div className="ex-top">
+                <span className="ex-chip">{b.icon}</span>
+                <span className="ex-info"><IcInfo size={18} /></span>
+              </div>
+              <div className="ex-text">
+                <span className="ex-sub">{b.step}</span>
+                <p className="ex-copy">{b.copy}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Screen 3 — Core Exercise. The immersive breathing player: a pulsating orb
+// paced to in-4 / out-6, with a two-minute session timer.
+
+// Shared breathing state — so the App can render the BACKGROUND (color + ripple) and
+// the FOREGROUND controls in separate DOM slots while sharing one paced timer.
+function useBreath(active) {
+  const IN = 4, OUT = 6, CYCLE = IN + OUT, TARGET = 120; // 2-minute session
+  const [running, setRunning] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  // Timer only advances while the Practice step is active — so leaving Practice freezes
+  // the breath (no background ticking, and no color flash during the dissolve-out).
+  React.useEffect(() => {
+    if (!running || !active) return;
+    const id = setInterval(() => {
+      setTick(t => {
+        const nt = t + 1;
+        if (nt >= TARGET) { setRunning(false); return TARGET; }
+        return nt;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running, active]);
+
+  const started = running || tick > 0;
+  const done = tick >= TARGET;
+  const pos = tick % CYCLE;
+  const activePhase = pos < IN ? "in" : "out";
+  const phase = done ? "done" : !started ? "ready" : running ? activePhase : "paused";
+  const scale = !started ? 0.55 : activePhase === "in" ? 1 : 0.5;
+  const dur = activePhase === "in" ? IN : OUT;
+  const remaining = Math.max(TARGET - tick, 0);
+  const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  const phaseWord = done ? "Nicely done"
+    : phase === "in" ? "Inhale"
+    : phase === "out" ? "Exhale"
+    : phase === "paused" ? "Paused"
+    : "Ready when you are";
+  const onPlay = () => { if (done) { setTick(0); setRunning(true); } else setRunning(r => !r); };
+
+  return { running, done, phase, scale, dur, timeText: mmss(remaining), phaseWord, onPlay };
+}
+
+// Background: the branded papercut, with its two wave layers animated by the breath.
+const WAVE1_D = "M-203.415 1181.77L-371.29 946.647C-371.29 946.647 -363.86 945.751 -349.39 944.14C-334.921 942.528 -313.275 940.351 -284.847 937.826C-270.632 936.544 -254.654 935.269 -237.033 933.914C-219.393 932.585 -200.092 931.202 -179.152 929.812C-168.672 929.112 -157.833 928.39 -146.592 927.624C-135.352 926.859 -123.734 926.097 -111.733 925.266C-99.732 924.435 -87.3944 923.592 -74.6743 922.679C-61.9542 921.765 -48.9352 920.786 -35.5554 919.747C-22.1756 918.708 -8.49412 917.566 5.46856 916.294C19.4312 915.022 33.7142 913.674 48.2385 912.18C62.7627 910.685 77.5713 909.025 92.5808 907.2C107.59 905.376 122.862 903.395 138.299 901.161C158.907 898.217 179.818 894.85 201.013 891.032C211.619 889.137 222.258 887.085 232.948 884.902C243.638 882.72 254.401 880.397 265.194 877.954C275.986 875.512 286.813 872.875 297.632 870.065C308.45 867.255 319.341 864.305 330.185 861.127C347.95 855.938 365.711 850.217 383.467 843.966C401.223 837.714 418.994 830.958 436.763 823.635C454.532 816.311 472.223 808.313 489.813 799.65C498.62 795.313 507.338 790.733 516.01 785.925C524.681 781.117 533.303 776.119 541.878 770.894C550.453 765.668 558.979 760.252 567.495 754.663C576.012 749.073 584.498 743.32 592.954 737.403C601.432 731.476 609.86 725.359 618.239 719.051C626.617 712.743 635.006 706.289 643.327 699.617C651.666 692.972 659.936 686.109 668.196 679.11C676.456 672.11 684.668 664.884 692.85 657.494C701.032 650.104 709.165 642.523 717.267 634.778C725.369 627.034 733.441 619.126 741.485 611.017C749.507 602.919 757.521 594.646 765.501 586.247C773.481 577.848 781.393 569.232 789.313 560.505C797.213 551.752 805.103 542.861 812.959 533.844C820.815 524.827 828.662 515.636 836.496 506.345C844.329 497.053 852.171 487.652 859.998 478.15C867.825 468.649 875.679 459.064 883.519 449.379C891.36 439.693 899.225 429.961 907.135 420.172C915.045 410.384 922.961 400.522 930.92 390.64C938.879 380.757 946.902 370.882 954.969 360.95C963.036 351.018 971.183 341.156 979.373 331.275C987.563 321.393 995.854 311.571 1004.23 301.783C1012.6 291.995 1021.05 282.278 1029.64 272.637C1038.23 262.997 1046.88 253.436 1055.69 244.017C1064.5 234.597 1073.43 225.264 1082.49 216.082C1091.56 206.9 1100.78 197.858 1110.13 189.004C1119.49 180.149 1129.05 171.452 1138.75 162.969C1148.46 154.486 1158.34 146.207 1168.42 138.159C1178.49 130.111 1188.76 122.293 1199.24 114.733C1209.73 107.173 1220.4 99.881 1231.3 92.8361C1242.21 85.7912 1253.33 79.0771 1264.68 72.6108C1276.03 66.1444 1287.6 59.9993 1299.41 54.1749C1311.22 48.3506 1323.28 42.8008 1335.57 37.6085C1347.85 32.4162 1360.39 27.5351 1373.16 22.9383C1385.93 18.378 1398.93 14.1018 1412.18 10.1738C1425.43 6.2458 1438.87 2.5851 1452.56 -0.764387C1466.24 -4.11387 1480.13 -7.19605 1494.26 -9.967C1508.39 -12.738 1522.67 -15.2951 1537.17 -17.5578C1551.66 -19.8204 1566.37 -21.8626 1581.23 -23.6537C1596.09 -25.4449 1611.13 -27.032 1626.32 -28.4419C1641.53 -29.825 1656.91 -30.9674 1672.52 -31.8622C1688.16 -32.7303 1704.02 -33.3507 1720.21 -33.6533C1736.39 -33.9559 1752.84 -33.9577 1769.53 -33.7118C1786.22 -33.4659 1803.19 -32.9557 1820.35 -32.2514C1837.51 -31.547 1854.86 -30.6486 1872.48 -29.5127C1890.09 -28.3768 1907.94 -27.0303 1926.05 -25.4827C1944.16 -23.9351 1962.46 -22.1934 1980.95 -20.3213C1999.43 -18.4491 2018.1 -16.483 2036.9 -14.4032C2055.71 -12.3233 2074.62 -10.22 2093.61 -8.08314C2112.6 -5.94629 2131.69 -3.78594 2150.89 -1.6019C2170.09 0.582148 2189.37 2.76316 2208.71 4.91395C2228.06 7.06473 2247.43 9.16897 2266.83 11.1529C2286.23 13.1737 2305.67 15.1009 2325.1 16.9279C2344.54 18.7548 2364.04 20.5152 2383.5 22.112C2402.97 23.7087 2422.39 25.1517 2441.8 26.4209C2461.21 27.6901 2480.5 28.7623 2499.81 29.6873C2519.12 30.6124 2538.42 31.3639 2557.64 31.9348C2576.87 32.5057 2596.09 32.9027 2615.2 33.066C2634.3 33.2293 2653.34 33.2121 2672.27 32.9243C2691.2 32.6364 2710 32.1612 2728.67 31.4253C2747.34 30.6894 2765.86 29.7027 2784.26 28.5923C2802.66 27.4818 2820.92 26.1842 2839.09 24.7895C2856.29 23.4499 2873.37 22.0232 2890.34 20.4361C2907.3 18.849 2924.11 17.1212 2940.76 15.2162C2957.42 13.3111 2973.87 11.2123 2990.07 8.87565C3006.27 6.53901 3022.3 3.99837 3038.05 1.19338C3053.8 -1.61161 3069.25 -4.67086 3084.43 -8.03124C3099.61 -11.3916 3114.48 -15.033 3129.01 -19.019C3143.56 -22.9782 3157.76 -27.2721 3171.64 -31.8837C3185.52 -36.4953 3199.03 -41.4685 3212.19 -46.7761C3225.35 -52.0837 3238.15 -57.7259 3250.58 -63.7295C3263.01 -69.7331 3275.08 -76.0713 3286.8 -82.744C3298.52 -89.4168 3309.85 -96.4409 3320.86 -103.783C3331.87 -111.125 3342.51 -118.791 3352.83 -126.776C3363.15 -134.76 3373.16 -143.026 3382.87 -151.582C3392.59 -160.138 3401.98 -168.976 3411.14 -178.061C3420.31 -187.147 3429.17 -196.486 3437.82 -206.009C3446.47 -215.533 3454.88 -225.304 3463.12 -235.243C3471.33 -245.171 3479.37 -255.304 3487.25 -265.54C3495.13 -275.776 3502.83 -286.18 3510.43 -296.68C3518.04 -307.181 3525.5 -317.795 3532.89 -328.443C3540.27 -339.128 3547.58 -349.846 3554.84 -360.618C3562.11 -371.39 3569.32 -382.205 3576.52 -392.983C3583.73 -403.799 3590.93 -414.577 3598.13 -425.356C3605.34 -436.134 3612.58 -446.859 3619.88 -457.504C3627.18 -468.149 3634.52 -478.777 3641.95 -489.271C3649.39 -499.765 3656.92 -510.162 3664.55 -520.426C3672.18 -530.689 3679.95 -540.839 3687.83 -550.828C3695.72 -560.817 3703.76 -570.666 3711.91 -580.354C3720.07 -590.042 3728.4 -599.563 3736.85 -608.923C3745.29 -618.283 3753.92 -627.476 3762.68 -636.482C3771.43 -645.487 3780.39 -654.299 3789.48 -662.924C3798.56 -671.548 3807.89 -679.962 3817.38 -688.134C3826.88 -696.307 3836.57 -704.286 3846.44 -712.061C3856.31 -719.835 3866.39 -727.353 3876.66 -734.676C3886.94 -741.999 3897.41 -749.091 3908.05 -755.98C3918.7 -762.868 3929.48 -769.606 3940.42 -776.166C3951.35 -782.727 3962.44 -789.074 3973.71 -795.253C3984.97 -801.432 3996.37 -807.424 4007.89 -813.256C4019.4 -819.087 4031.03 -824.795 4042.76 -830.369C4054.48 -835.942 4066.23 -841.453 4078.03 -846.883L4170.03 -889.217C4179.44 -893.549 4188.8 -897.925 4198.09 -902.344C4207.39 -906.763 4216.58 -911.279 4225.68 -915.929C4234.78 -920.579 4243.8 -925.263 4252.69 -930.097C4261.57 -934.931 4270.41 -939.818 4279.16 -944.803C4287.91 -949.788 4296.54 -954.896 4305.07 -960.101C4313.6 -965.307 4322.02 -970.636 4330.31 -976.089C4338.61 -981.542 4346.81 -987.092 4354.89 -992.766C4362.97 -998.439 4370.96 -1004.21 4378.82 -1010.1C4386.69 -1016 4394.44 -1022.02 4402.07 -1028.16C4409.71 -1034.3 4417.26 -1040.51 4424.68 -1046.88C4435.82 -1056.41 4446.77 -1066.11 4457.54 -1075.97C4468.29 -1085.85 4478.86 -1095.91 4489.24 -1106.12C4499.61 -1116.33 4509.79 -1126.74 4519.79 -1137.28C4529.79 -1147.81 4539.65 -1158.46 4549.35 -1169.22C4559.05 -1179.97 4568.61 -1190.8 4578.03 -1201.75C4587.47 -1212.66 4596.76 -1223.66 4605.94 -1234.71C4615.11 -1245.75 4624.22 -1256.8 4633.23 -1267.88C4642.24 -1278.96 4651.17 -1290.03 4660.05 -1301.04C4668.92 -1312.06 4677.76 -1323.06 4686.53 -1333.99C4695.34 -1344.9 4704.08 -1355.74 4712.83 -1366.49C4721.59 -1377.24 4730.31 -1387.86 4739.07 -1398.36C4747.83 -1408.86 4756.58 -1419.21 4765.38 -1429.41C4774.18 -1439.61 4782.98 -1449.63 4791.82 -1459.49C4800.66 -1469.35 4809.57 -1479 4818.55 -1488.42C4827.52 -1497.85 4836.53 -1507.07 4845.62 -1516.06C4854.71 -1525.04 4863.89 -1533.77 4873.16 -1542.23C4882.4 -1550.72 4891.75 -1558.93 4901.23 -1566.84C4910.69 -1574.79 4920.25 -1582.42 4929.9 -1589.78C4939.55 -1597.13 4949.35 -1604.2 4959.21 -1610.97C4969.07 -1617.75 4979.07 -1624.2 4989.18 -1630.38C4999.3 -1636.56 5009.51 -1642.4 5019.83 -1647.97C5030.15 -1653.53 5040.59 -1658.77 5051.14 -1663.73C5061.69 -1668.69 5072.33 -1673.33 5083.05 -1677.73C5093.77 -1682.13 5104.61 -1686.2 5115.5 -1690.04C5126.39 -1693.88 5137.37 -1697.43 5148.41 -1700.74C5159.45 -1704.04 5170.52 -1707.15 5181.66 -1710C5192.79 -1712.85 5203.96 -1715.49 5215.17 -1717.92C5226.38 -1720.34 5237.6 -1722.59 5248.82 -1724.63C5260.05 -1726.66 5271.29 -1728.56 5282.51 -1730.28C5293.73 -1732 5304.95 -1733.57 5316.13 -1735.02C5327.32 -1736.47 5338.47 -1737.76 5349.59 -1738.94C5360.71 -1740.11 5371.77 -1741.22 5382.77 -1742.19C5404.8 -1744.12 5426.53 -1745.77 5447.95 -1747.09C5469.37 -1748.42 5490.39 -1749.56 5511.01 -1750.52C5531.62 -1751.48 5551.77 -1752.32 5571.45 -1753.06C5591.12 -1753.8 5610.27 -1754.47 5628.89 -1755.11C5647.51 -1755.75 5665.54 -1756.37 5682.96 -1757.04C5700.39 -1757.7 5717.23 -1758.37 5733.44 -1759.08C5749.65 -1759.79 5765.19 -1760.58 5780.07 -1761.42C5794.95 -1762.26 5809.19 -1763.13 5822.74 -1764.1C5836.28 -1765.07 5849.19 -1766.04 5861.4 -1767.07C5873.6 -1768.1 5885.16 -1769.15 5896 -1770.23C5917.69 -1772.43 5936.75 -1774.59 5953.06 -1776.69C5969.37 -1778.79 5983 -1780.73 5993.93 -1782.42C6004.86 -1784.11 6013.09 -1785.45 6018.62 -1786.39C6024.14 -1787.33 6026.95 -1787.8 6026.95 -1787.8L6214.49 -1525.13C6214.49 -1525.13 6211.45 -1524.58 6205.5 -1523.55C6199.56 -1522.52 6190.66 -1521.02 6178.88 -1519.15C6167.1 -1517.29 6152.42 -1515.08 6134.87 -1512.69C6117.32 -1510.3 6096.81 -1507.87 6073.39 -1505.51C6061.68 -1504.32 6049.18 -1503.26 6035.95 -1502.22C6022.71 -1501.17 6008.71 -1500.24 5994 -1499.37C5979.29 -1498.5 5963.81 -1497.7 5947.62 -1497C5931.43 -1496.31 5914.53 -1495.64 5896.92 -1495.11C5879.32 -1494.58 5860.98 -1494.1 5841.98 -1493.71C5822.98 -1493.32 5803.31 -1492.98 5783.02 -1492.66C5762.72 -1492.35 5741.85 -1491.99 5720.42 -1491.58C5698.98 -1491.17 5677.03 -1490.63 5654.65 -1489.93C5643.46 -1489.57 5632.14 -1489.16 5620.73 -1488.71C5609.32 -1488.26 5597.83 -1487.73 5586.22 -1487.12C5574.61 -1486.5 5562.98 -1485.81 5551.25 -1484.99C5539.52 -1484.18 5527.79 -1483.23 5515.98 -1482.16C5504.17 -1481.1 5492.33 -1479.88 5480.46 -1478.51C5468.59 -1477.13 5456.73 -1475.58 5444.85 -1473.85C5432.98 -1472.12 5421.13 -1470.18 5409.29 -1468.04C5397.45 -1465.9 5385.65 -1463.53 5373.88 -1460.92C5362.11 -1458.31 5350.41 -1455.45 5338.79 -1452.3C5327.17 -1449.16 5315.6 -1445.76 5304.13 -1442.04C5292.66 -1438.33 5281.29 -1434.31 5270.03 -1429.94C5258.77 -1425.57 5247.63 -1420.91 5236.61 -1415.88C5225.59 -1410.84 5214.7 -1405.47 5203.97 -1399.72C5193.24 -1393.96 5182.61 -1387.9 5172.16 -1381.42C5161.71 -1374.94 5151.37 -1368.16 5141.19 -1360.98C5131.01 -1353.81 5120.97 -1346.31 5111.05 -1338.45C5101.14 -1330.58 5091.37 -1322.39 5081.74 -1313.83C5072.11 -1305.28 5062.57 -1296.44 5053.19 -1287.26C5043.81 -1278.07 5034.47 -1268.63 5025.29 -1258.89C5016.08 -1249.14 5006.98 -1239.13 4997.94 -1228.86C4988.9 -1218.58 4979.96 -1208.07 4971.03 -1197.35C4962.11 -1186.64 4953.26 -1175.71 4944.42 -1164.64C4935.58 -1153.53 4926.75 -1142.32 4917.91 -1130.93C4909.09 -1119.55 4900.22 -1108.08 4891.38 -1096.48C4882.55 -1084.88 4873.6 -1073.23 4864.65 -1061.5C4855.7 -1049.78 4846.67 -1038.05 4837.57 -1026.3C4828.47 -1014.54 4819.23 -1002.82 4809.88 -991.165C4800.54 -979.508 4791.07 -967.865 4781.47 -956.336C4775.07 -948.629 4768.61 -940.965 4762.09 -933.345C4755.57 -925.725 4748.95 -918.165 4742.29 -910.622C4735.63 -903.078 4728.85 -895.659 4722.01 -888.283C4715.17 -880.907 4708.21 -873.618 4701.16 -866.427C4694.1 -859.235 4686.95 -852.14 4679.7 -845.142C4672.45 -838.145 4665.09 -831.207 4657.68 -824.35C4650.27 -817.493 4642.76 -810.696 4635.17 -803.969C4627.58 -797.242 4619.92 -790.586 4612.15 -784.027C4604.38 -777.467 4596.52 -771.005 4588.55 -764.603C4580.59 -758.201 4572.53 -751.933 4564.35 -745.788C4556.17 -739.644 4547.89 -733.56 4539.48 -727.626C4531.06 -721.692 4522.57 -715.866 4513.92 -710.179C4505.27 -704.493 4496.52 -698.941 4487.62 -693.529C4478.72 -688.117 4469.7 -682.866 4460.52 -677.755C4451.35 -672.644 4442.08 -667.667 4432.67 -662.804C4423.26 -657.941 4413.77 -653.185 4404.17 -648.516C4394.56 -643.846 4384.88 -639.284 4375.15 -634.739C4365.43 -630.194 4355.63 -625.682 4345.82 -621.17C4334.04 -615.75 4322.24 -610.319 4310.46 -604.862C4298.66 -599.396 4286.89 -593.838 4275.18 -588.201C4263.47 -582.564 4251.85 -576.792 4240.39 -570.844C4228.93 -564.896 4217.59 -558.786 4206.42 -552.51C4195.25 -546.234 4184.18 -539.787 4173.26 -533.2C4162.34 -526.613 4151.56 -519.838 4140.99 -512.843C4130.43 -505.847 4120.01 -498.675 4109.81 -491.244C4099.59 -483.841 4089.59 -476.217 4079.76 -468.389C4069.93 -460.561 4060.3 -452.501 4050.84 -444.275C4041.38 -436.049 4032.1 -427.618 4022.95 -419.001C4013.82 -410.393 4004.86 -401.582 3996.13 -392.549C3987.39 -383.517 3978.82 -374.28 3970.41 -364.866C3962.01 -355.452 3953.79 -345.845 3945.74 -336.096C3937.68 -326.348 3929.74 -316.402 3921.96 -306.353C3914.15 -296.294 3906.51 -286.093 3898.98 -275.733C3891.45 -265.373 3884.01 -254.915 3876.68 -244.36C3869.34 -233.806 3862.1 -223.118 3854.92 -212.386C3847.74 -201.654 3840.62 -190.842 3833.52 -180.003C3826.42 -169.165 3819.33 -158.299 3812.25 -147.433C3805.16 -136.568 3798.04 -125.719 3790.9 -114.897C3783.73 -104.102 3776.51 -93.3501 3769.21 -82.6686C3761.91 -71.9872 3754.47 -61.4563 3746.93 -51.0224C3739.39 -40.5885 3731.68 -30.2849 3723.81 -20.1589C3715.94 -10.0328 3707.84 -0.0540008 3699.56 9.69393C3691.27 19.4419 3682.71 28.9991 3673.89 38.2819C3665.07 47.5647 3655.97 56.6199 3646.58 65.4208C3637.18 74.2216 3627.48 82.7048 3617.47 90.8967C3607.47 99.0887 3597.15 107 3586.5 114.603C3575.85 122.206 3564.84 129.474 3553.46 136.418C3542.08 143.362 3530.32 149.981 3518.18 156.276C3506.03 162.544 3493.48 168.497 3480.55 174.126C3467.61 179.727 3454.24 185.025 3440.5 189.997C3426.76 194.97 3412.64 199.618 3398.15 203.978C3383.65 208.338 3368.78 212.374 3353.57 216.138C3338.36 219.903 3322.83 223.386 3306.99 226.625C3291.15 229.864 3275.05 232.828 3258.72 235.582C3242.38 238.336 3225.79 240.852 3208.99 243.148C3192.18 245.443 3175.2 247.535 3158.02 249.432C3140.85 251.33 3123.54 253.077 3106.09 254.673C3088.64 256.269 3071.07 257.705 3053.44 258.997C3035.8 260.289 3018.06 261.521 3000.25 262.609C2982.44 263.697 2964.61 264.722 2946.74 265.693C2928.04 266.696 2909.31 267.672 2890.59 268.575C2871.86 269.478 2853.13 270.28 2834.38 270.983C2815.63 271.685 2796.89 272.204 2778.1 272.569C2759.34 272.924 2740.52 273.088 2721.61 273.046C2702.73 272.993 2683.79 272.75 2664.81 272.316C2645.82 271.883 2626.81 271.249 2607.76 270.488C2588.72 269.727 2569.72 268.835 2550.74 267.834C2531.75 266.833 2512.85 265.792 2494 264.657C2475.15 263.522 2456.36 262.357 2437.61 261.073C2418.85 259.788 2400.14 258.483 2381.51 257.138C2362.88 255.793 2344.36 254.436 2325.94 253.101C2307.53 251.767 2289.21 250.456 2270.98 249.142C2252.75 247.828 2234.65 246.564 2216.66 245.351C2198.68 244.138 2180.85 243.028 2163.13 241.942C2145.41 240.856 2127.83 239.884 2110.43 239.006C2093.03 238.127 2075.74 237.373 2058.68 236.765C2041.62 236.158 2024.75 235.745 2008.12 235.542C1991.49 235.34 1975.08 235.322 1958.83 235.444C1942.57 235.566 1926.5 235.892 1910.61 236.413C1894.73 236.933 1878.98 237.604 1863.37 238.425C1847.76 239.246 1832.25 240.201 1816.91 241.361C1801.55 242.493 1786.36 243.829 1771.31 245.353C1756.26 246.877 1741.41 248.631 1726.72 250.627C1712.03 252.622 1697.54 254.848 1683.24 257.341C1668.94 259.835 1654.87 262.613 1641.01 265.685C1627.15 268.757 1613.49 272.096 1600.09 275.773C1586.69 279.451 1573.5 283.422 1560.54 287.715C1547.58 292.008 1534.9 296.638 1522.45 301.617C1510.01 306.595 1497.81 311.857 1485.86 317.494C1473.92 323.131 1462.21 329.09 1450.75 335.359C1439.29 341.628 1428.08 348.245 1417.1 355.146C1406.11 362.047 1395.37 369.232 1384.83 376.712C1374.29 384.191 1363.96 391.929 1353.85 399.923C1343.73 407.918 1333.81 416.144 1324.09 424.6C1314.36 433.056 1304.81 441.717 1295.41 450.554C1286.02 459.392 1276.8 468.397 1267.71 477.589C1258.62 486.781 1249.68 496.051 1240.85 505.48C1232.04 514.9 1223.35 524.444 1214.74 534.057C1206.15 543.661 1197.66 553.362 1189.27 563.123C1180.87 572.884 1172.55 582.652 1164.3 592.454C1156.05 602.255 1147.89 612.09 1139.76 621.905C1131.64 631.72 1123.56 641.515 1115.51 651.264C1107.47 661.039 1099.46 670.731 1091.5 680.402C1083.53 690.074 1075.55 699.645 1067.62 709.16C1059.69 718.675 1051.74 728.09 1043.8 737.431C1035.86 746.772 1027.94 755.993 1020.02 765.113C1012.09 774.234 1004.17 783.245 996.22 792.128C988.269 801.012 980.347 809.775 972.372 818.385C964.417 827.021 956.431 835.494 948.434 843.83C940.438 852.165 932.429 860.364 924.41 868.426C916.39 876.488 908.34 884.386 900.26 892.12C892.179 899.855 884.087 907.452 875.946 914.859C867.804 922.266 859.674 929.526 851.491 936.633C843.307 943.739 835.137 950.662 826.915 957.431C818.693 964.2 810.462 970.795 802.201 977.226C793.939 983.658 785.667 989.952 777.345 996.057C769.022 1002.16 760.71 1008.12 752.349 1013.88C743.988 1019.65 735.636 1025.27 727.236 1030.7C718.835 1036.13 710.443 1041.45 702.022 1046.57C693.62 1051.71 685.167 1056.71 676.65 1061.41C659.613 1070.85 642.286 1079.35 624.534 1086.74C606.822 1094.14 588.819 1100.61 570.662 1106.3C552.504 1111.99 534.285 1117.07 516.119 1121.7C505.026 1124.53 493.925 1127.19 482.858 1129.65C471.792 1132.11 460.716 1134.4 449.695 1136.52C438.674 1138.64 427.662 1140.62 416.723 1142.45C405.785 1144.29 394.879 1145.96 384.024 1147.51C373.169 1149.06 362.365 1150.48 351.672 1151.81C340.979 1153.14 330.335 1154.38 319.764 1155.47C303.926 1157.15 288.293 1158.58 272.842 1159.83C257.412 1161.06 242.224 1162.15 227.296 1163.12C212.371 1164.06 197.724 1164.9 183.361 1165.6C168.997 1166.31 154.953 1166.95 141.248 1167.53C127.524 1168.09 114.141 1168.6 101.118 1169.05C88.0942 1169.49 75.4101 1169.89 63.0845 1170.27C50.759 1170.65 38.8349 1170.98 27.2694 1171.29C15.7039 1171.6 4.57907 1171.92 -6.18774 1172.22C-27.681 1172.84 -47.5368 1173.44 -65.6733 1174.08C-83.8097 1174.71 -100.208 1175.39 -114.824 1176.11C-129.441 1176.83 -142.273 1177.55 -153.337 1178.2C-164.402 1178.85 -173.68 1179.46 -181.106 1179.99C-195.957 1181.07 -203.578 1181.7 -203.578 1181.7L-203.415 1181.77Z";
+const WAVE2_D = "M-37.0355 1414.81L-203.421 1181.77C-203.421 1181.77 -195.8 1181.15 -180.948 1180.07C-173.522 1179.53 -164.245 1178.92 -153.18 1178.27C-142.115 1177.62 -129.243 1176.93 -114.667 1176.19C-100.091 1175.45 -83.6519 1174.78 -65.5155 1174.15C-47.3791 1173.52 -27.5428 1172.88 -6.03049 1172.3C4.73631 1172 15.8616 1171.68 27.4272 1171.36C38.9927 1171.05 50.9162 1170.72 63.2418 1170.34C75.5673 1169.97 88.2297 1169.58 101.274 1169.12C114.319 1168.66 127.682 1168.16 141.406 1167.61C155.129 1167.05 169.174 1166.42 183.518 1165.68C197.863 1164.94 212.528 1164.13 227.453 1163.2C242.379 1162.26 257.588 1161.17 272.999 1159.9C288.41 1158.64 304.083 1157.22 319.921 1155.55C330.473 1154.42 341.096 1153.2 351.83 1151.88C362.564 1150.57 373.307 1149.11 384.181 1147.59C395.056 1146.07 405.943 1144.36 416.881 1142.53C427.819 1140.69 438.831 1138.72 449.852 1136.6C460.874 1134.47 471.95 1132.19 483.016 1129.72C494.082 1127.26 505.183 1124.6 516.276 1121.77C534.442 1117.15 552.662 1112.07 570.819 1106.38C588.977 1100.69 606.979 1094.22 624.69 1086.81C642.402 1079.41 659.749 1070.93 676.808 1061.48C685.327 1056.74 693.759 1051.76 702.18 1046.64C710.581 1041.5 718.993 1036.2 727.394 1030.78C735.794 1025.35 744.167 1019.72 752.507 1013.96C760.846 1008.2 769.179 1002.24 777.502 996.131C785.824 990.027 794.075 983.742 802.358 977.301C810.641 970.859 818.872 964.264 827.073 957.505C835.273 950.746 843.487 943.804 851.648 936.707C859.81 929.611 867.962 922.341 876.103 914.934C884.244 907.527 892.337 899.929 900.417 892.195C908.498 884.46 916.548 876.562 924.567 868.5C932.587 860.439 940.614 852.266 948.592 843.904C956.57 835.542 964.556 827.069 972.53 818.459C980.504 809.85 988.427 801.086 996.378 792.203C1004.33 783.319 1012.25 774.309 1020.17 765.188C1028.1 756.067 1036.04 746.837 1043.96 737.505C1051.88 728.174 1059.8 718.733 1067.78 709.235C1075.75 699.737 1083.67 690.122 1091.66 680.477C1099.64 670.832 1107.65 661.104 1115.66 651.338C1123.7 641.563 1131.78 631.768 1139.92 621.98C1148.04 612.165 1156.23 602.357 1164.46 592.528C1172.7 582.727 1181.01 572.932 1189.42 563.198C1197.83 553.463 1206.3 543.773 1214.9 534.132C1223.49 524.492 1232.18 514.985 1241.01 505.555C1249.84 496.125 1258.76 486.829 1267.87 477.664C1276.97 468.498 1286.19 459.493 1295.57 450.629C1304.95 441.764 1314.52 433.131 1324.24 424.675C1333.97 416.219 1343.89 407.993 1354 399.998C1364.12 392.003 1374.44 384.266 1384.98 376.787C1395.52 369.307 1406.27 362.121 1417.25 355.22C1428.23 348.319 1439.47 341.729 1450.91 335.433C1462.35 329.137 1474.06 323.179 1486.02 317.569C1497.98 311.959 1510.15 306.643 1522.61 301.691C1535.07 296.74 1547.76 292.11 1560.7 287.79C1573.64 283.471 1586.81 279.509 1600.24 275.848C1613.68 272.188 1627.31 268.831 1641.17 265.759C1655.03 262.687 1669.14 259.926 1683.4 257.416C1697.7 254.923 1712.17 252.67 1726.88 250.701C1741.56 248.706 1756.42 246.952 1771.47 245.428C1786.52 243.904 1801.71 242.568 1817.07 241.436C1832.43 240.303 1847.92 239.321 1863.53 238.5C1879.14 237.679 1894.89 237.008 1910.77 236.487C1926.65 235.967 1942.73 235.641 1958.99 235.519C1975.24 235.396 1991.67 235.405 2008.28 235.617C2024.89 235.83 2041.75 236.243 2058.84 236.84C2075.92 237.438 2093.14 238.185 2110.58 239.08C2128.02 239.976 2145.58 240.958 2163.29 242.017C2180.99 243.076 2198.83 244.212 2216.82 245.426C2234.8 246.639 2252.91 247.903 2271.14 249.217C2289.37 250.531 2307.68 251.842 2326.1 253.176C2344.52 254.51 2363.06 255.858 2381.67 257.213C2400.29 258.558 2418.98 259.872 2437.76 261.147C2456.54 262.422 2475.31 263.597 2494.16 264.731C2513.01 265.866 2531.91 266.907 2550.89 267.909C2569.88 268.91 2588.87 269.801 2607.92 270.562C2626.94 271.333 2645.96 271.93 2664.96 272.391C2683.97 272.851 2702.9 273.094 2721.77 273.12C2740.65 273.173 2759.47 273.008 2778.26 272.643C2797.05 272.278 2815.79 271.723 2834.54 271.057C2853.28 270.392 2872 269.562 2890.74 268.65C2909.49 267.737 2928.19 266.771 2946.9 265.768C2964.77 264.796 2982.62 263.799 3000.41 262.684C3018.2 261.569 3035.94 260.374 3053.59 259.072C3071.25 257.77 3088.82 256.334 3106.24 254.748C3123.69 253.151 3141.02 251.431 3158.18 249.507C3175.34 247.583 3192.34 245.518 3209.14 243.222C3225.95 240.927 3242.52 238.421 3258.87 235.657C3275.23 232.893 3291.33 229.928 3307.15 226.699C3322.97 223.471 3338.52 219.977 3353.73 216.213C3368.94 212.448 3383.79 208.386 3398.3 204.053C3412.82 199.719 3426.94 195.035 3440.66 190.072C3454.4 185.099 3467.74 179.812 3480.71 174.2C3493.66 168.598 3506.21 162.645 3518.34 156.35C3530.48 150.056 3542.25 143.463 3553.62 136.493C3564.98 129.522 3576.01 122.28 3586.66 114.677C3597.31 107.074 3607.63 99.1633 3617.63 90.9713C3627.61 82.7526 3637.32 74.2694 3646.73 65.4953C3656.15 56.7212 3665.22 47.6761 3674.04 38.3565C3682.87 29.0369 3691.41 19.5266 3699.72 9.76865C3708.02 0.0107173 3716.09 -9.95823 3723.96 -20.0843C3731.86 -30.2203 3739.55 -40.5137 3747.09 -50.9476C3754.62 -61.3815 3762.07 -71.9492 3769.36 -82.594C3776.69 -93.2487 3783.91 -104 3791.05 -114.823C3798.2 -125.645 3805.32 -136.493 3812.41 -147.359C3819.49 -158.224 3826.57 -169.09 3833.68 -179.929C3840.78 -190.767 3847.9 -201.58 3855.08 -212.311C3862.26 -223.043 3869.52 -233.705 3876.84 -244.286C3884.15 -254.867 3891.58 -265.325 3899.14 -275.658C3906.69 -285.992 3914.35 -296.202 3922.12 -306.278C3929.88 -316.354 3937.82 -326.263 3945.89 -336.022C3953.97 -345.78 3962.18 -355.388 3970.57 -364.792C3978.96 -374.195 3987.52 -383.432 3996.28 -392.474C4005.04 -401.517 4013.98 -410.319 4023.1 -418.926C4032.23 -427.534 4041.52 -435.964 4051 -444.2C4060.48 -452.437 4070.09 -460.486 4079.92 -468.314C4089.75 -476.142 4099.75 -483.766 4109.97 -491.17C4120.19 -498.573 4130.58 -505.773 4141.15 -512.768C4151.72 -519.763 4162.5 -526.538 4173.42 -533.125C4184.34 -539.713 4195.37 -546.176 4206.58 -552.436C4217.79 -558.695 4229.09 -564.821 4240.55 -570.769C4252.01 -576.718 4263.62 -582.489 4275.34 -588.126C4287.05 -593.764 4298.83 -599.294 4310.62 -604.788C4322.42 -610.255 4334.22 -615.685 4345.98 -621.095C4355.78 -625.607 4365.59 -630.119 4375.31 -634.664C4385.03 -639.21 4394.74 -643.782 4404.32 -648.441C4413.91 -653.1 4423.42 -657.866 4432.83 -662.73C4442.24 -667.593 4451.51 -672.57 4460.68 -677.681C4469.86 -682.791 4478.88 -688.043 4487.78 -693.454C4496.68 -698.866 4505.43 -704.419 4514.08 -710.105C4522.73 -715.791 4531.22 -721.618 4539.63 -727.551C4548.05 -733.485 4556.3 -739.559 4564.5 -745.714C4572.7 -751.868 4580.75 -758.163 4588.71 -764.528C4596.67 -770.894 4604.52 -777.383 4612.31 -783.952C4620.09 -790.521 4627.74 -797.168 4635.33 -803.894C4642.92 -810.621 4650.43 -817.418 4657.84 -824.275C4665.25 -831.132 4672.6 -838.07 4679.86 -845.068C4687.11 -852.065 4694.26 -859.16 4701.32 -866.352C4708.37 -873.544 4715.31 -880.823 4722.17 -888.208C4729.03 -895.594 4735.78 -903.004 4742.44 -910.547C4749.11 -918.09 4755.73 -925.65 4762.24 -933.27C4768.76 -940.89 4775.22 -948.554 4781.62 -956.261C4791.21 -967.817 4800.68 -979.423 4810.04 -991.09C4819.41 -1002.76 4828.61 -1014.49 4837.73 -1026.22C4846.85 -1037.95 4855.86 -1049.7 4864.81 -1061.43C4873.76 -1073.15 4882.66 -1084.82 4891.54 -1096.4C4900.42 -1107.99 4909.25 -1119.48 4918.07 -1130.86C4926.89 -1142.24 4935.72 -1153.48 4944.58 -1164.56C4953.44 -1175.64 4962.29 -1186.57 4971.19 -1197.28C4980.09 -1207.98 4989.06 -1218.51 4998.1 -1228.78C5007.13 -1239.05 5016.24 -1249.07 5025.44 -1258.81C5034.65 -1268.56 5043.95 -1278.03 5053.35 -1287.19C5062.74 -1296.34 5072.27 -1305.2 5081.9 -1313.76C5091.52 -1322.31 5101.3 -1330.5 5111.21 -1338.37C5121.13 -1346.24 5131.14 -1353.76 5141.35 -1360.91C5151.55 -1368.06 5161.85 -1374.9 5172.32 -1381.35C5182.78 -1387.8 5193.39 -1393.89 5204.12 -1399.64C5214.86 -1405.4 5225.75 -1410.77 5236.77 -1415.8C5247.79 -1420.84 5258.9 -1425.53 5270.19 -1429.87C5281.47 -1434.2 5292.82 -1438.25 5304.29 -1441.97C5315.76 -1445.68 5327.31 -1449.11 5338.95 -1452.23C5350.59 -1455.35 5362.29 -1458.24 5374.04 -1460.84C5385.79 -1463.44 5397.6 -1465.82 5409.44 -1467.97C5421.29 -1470.11 5433.13 -1472.04 5445.01 -1473.78C5456.89 -1475.51 5468.75 -1477.06 5480.62 -1478.43C5492.49 -1479.81 5504.31 -1481.02 5516.14 -1482.09C5527.97 -1483.16 5539.72 -1484.09 5551.41 -1484.92C5563.12 -1485.76 5574.77 -1486.47 5586.38 -1487.04C5597.96 -1487.65 5609.48 -1488.15 5620.89 -1488.64C5632.3 -1489.13 5643.62 -1489.5 5654.81 -1489.85C5677.21 -1490.56 5699.14 -1491.09 5720.58 -1491.5C5742.01 -1491.92 5762.88 -1492.28 5783.18 -1492.59C5803.47 -1492.9 5823.14 -1493.24 5842.14 -1493.64C5861.14 -1494.03 5879.48 -1494.47 5897.08 -1495.03C5914.69 -1495.6 5931.61 -1496.21 5947.78 -1496.93C5963.95 -1497.65 5979.43 -1498.45 5994.16 -1499.29C6008.89 -1500.14 6022.89 -1501.11 6036.11 -1502.14C6049.32 -1503.17 6061.84 -1504.24 6073.55 -1505.44C6096.97 -1507.79 6117.48 -1510.23 6135.03 -1512.62C6152.57 -1515.01 6167.25 -1517.21 6179.03 -1519.08C6190.81 -1520.94 6199.71 -1522.45 6205.66 -1523.48C6211.61 -1524.51 6214.65 -1525.05 6214.65 -1525.05L6404.32 -1259.41C6404.32 -1259.41 6401.37 -1258.91 6395.55 -1257.93C6389.73 -1256.96 6381.01 -1255.61 6369.45 -1253.96C6357.9 -1252.3 6343.39 -1250.5 6326.01 -1248.65C6308.63 -1246.8 6288.27 -1245 6265.02 -1243.36C6253.4 -1242.53 6240.99 -1241.83 6227.89 -1241.17C6214.79 -1240.51 6200.87 -1239.97 6186.28 -1239.51C6171.68 -1239.04 6156.35 -1238.67 6140.32 -1238.37C6124.28 -1238.06 6107.52 -1237.88 6090.09 -1237.75C6072.66 -1237.62 6054.56 -1237.54 6035.8 -1237.54C6017.04 -1237.54 5997.62 -1237.57 5977.61 -1237.63C5957.59 -1237.7 5936.96 -1237.77 5915.8 -1237.73C5894.65 -1237.74 5872.98 -1237.61 5850.86 -1237.35C5839.81 -1237.2 5828.65 -1237.01 5817.39 -1236.76C5806.12 -1236.52 5794.78 -1236.21 5783.34 -1235.81C5771.89 -1235.41 5760.42 -1234.93 5748.86 -1234.34C5737.29 -1233.74 5725.68 -1233.05 5714.01 -1232.24C5702.35 -1231.42 5690.63 -1230.47 5678.89 -1229.4C5667.15 -1228.33 5655.41 -1227.05 5643.64 -1225.65C5631.87 -1224.26 5620.11 -1222.65 5608.37 -1220.84C5596.64 -1219.03 5584.89 -1217.03 5573.21 -1214.82C5561.54 -1212.61 5549.88 -1210.13 5538.31 -1207.4C5526.74 -1204.67 5515.22 -1201.68 5503.78 -1198.4C5492.34 -1195.13 5480.99 -1191.58 5469.76 -1187.69C5458.53 -1183.8 5447.38 -1179.63 5436.36 -1175.09C5425.34 -1170.55 5414.44 -1165.71 5403.68 -1160.52C5392.93 -1155.32 5382.29 -1149.75 5371.8 -1143.85C5361.31 -1137.96 5350.98 -1131.68 5340.78 -1125.06C5330.57 -1118.45 5320.53 -1111.45 5310.63 -1104.12C5300.73 -1096.79 5290.95 -1089.09 5281.32 -1081.07C5271.69 -1073.05 5262.22 -1064.68 5252.83 -1055.99C5243.45 -1047.3 5234.23 -1038.29 5225.11 -1028.98C5216 -1019.67 5206.97 -1010.07 5198.04 -1000.21C5189.12 -990.345 5180.28 -980.2 5171.53 -969.812C5162.78 -959.424 5154.08 -948.808 5145.44 -937.975C5136.81 -927.142 5128.24 -916.092 5119.68 -904.869C5111.15 -893.655 5102.64 -882.241 5094.12 -870.716C5085.61 -859.192 5077.12 -847.504 5068.59 -835.759C5060.06 -824.015 5051.52 -812.16 5042.89 -800.265C5034.27 -788.37 5025.6 -776.455 5016.86 -764.51C5008.11 -752.592 4999.27 -740.634 4990.35 -728.71C4981.43 -716.785 4972.4 -704.884 4963.26 -693.034C4954.11 -681.183 4944.82 -669.41 4935.37 -657.777C4925.93 -646.144 4916.32 -634.578 4906.49 -623.233C4896.68 -611.861 4886.68 -600.683 4876.44 -589.68C4869.63 -582.35 4862.71 -575.118 4855.64 -568.027C4848.57 -560.935 4841.45 -553.924 4834.14 -547.08C4826.84 -540.236 4819.46 -533.499 4811.92 -526.902C4804.38 -520.306 4796.71 -513.86 4788.9 -507.564C4781.09 -501.269 4773.14 -495.124 4765.05 -489.13C4756.97 -483.135 4748.73 -477.318 4740.35 -471.615C4732 -465.922 4723.5 -460.342 4714.91 -454.896C4706.32 -449.451 4697.61 -444.092 4688.84 -438.813C4680.08 -433.535 4671.19 -428.344 4662.24 -423.232C4653.3 -418.121 4644.26 -413.107 4635.09 -408.18C4625.93 -403.253 4616.71 -398.443 4607.38 -393.72C4598.04 -388.997 4588.6 -384.371 4579.11 -379.788C4567.44 -374.171 4555.7 -368.66 4543.91 -363.13C4532.17 -357.583 4520.5 -351.928 4508.96 -346.087C4497.42 -340.245 4486.05 -334.264 4474.8 -328.094C4463.56 -321.925 4452.47 -315.578 4441.54 -309.055C4430.6 -302.531 4419.88 -295.786 4409.36 -288.811C4398.84 -281.835 4388.55 -274.649 4378.47 -267.205C4368.38 -259.789 4358.52 -252.124 4348.82 -244.282C4339.11 -236.44 4329.64 -228.351 4320.33 -220.084C4311.01 -211.818 4301.9 -203.357 4292.95 -194.692C4284.01 -186.027 4275.26 -177.169 4266.75 -168.062C4258.23 -158.956 4249.94 -149.629 4241.88 -140.091C4233.81 -130.553 4225.91 -120.838 4218.2 -110.928C4210.49 -101.019 4202.98 -90.9525 4195.58 -80.7254C4188.19 -70.5351 4180.96 -60.2042 4173.8 -49.803C4166.64 -39.4018 4159.65 -28.8968 4152.73 -18.3215C4145.81 -7.74617 4138.96 2.87255 4132.16 13.5349C4125.36 24.1972 4118.65 34.9298 4111.95 45.6524C4105.27 56.4017 4098.6 67.1143 4091.95 77.817C4085.29 88.5197 4078.6 99.1689 4071.85 109.774C4065.1 120.38 4058.29 130.869 4051.41 141.287C4044.53 151.705 4037.59 162.007 4030.59 172.191C4023.62 182.365 4016.57 192.396 4009.5 202.263C4002.42 212.13 3995.23 221.8 3987.95 231.299C3980.67 240.798 3973.24 250.047 3965.65 259.081C3958.07 268.116 3950.25 276.903 3942.2 285.405C3934.15 293.908 3925.8 302.119 3917.14 310.05C3908.48 317.98 3899.47 325.576 3890.03 332.867C3880.6 340.159 3870.77 347.135 3860.47 353.79C3850.18 360.445 3839.37 366.772 3828.07 372.751C3816.78 378.73 3804.92 384.401 3792.52 389.716C3780.14 395.058 3767.19 400.056 3753.68 404.745C3740.17 409.434 3726.11 413.842 3711.5 417.968C3696.9 422.094 3681.79 425.956 3666.17 429.589C3650.55 433.223 3634.46 436.608 3617.95 439.836C3601.44 443.064 3584.47 446.07 3567.15 448.926C3549.82 451.782 3532.11 454.46 3514.11 457.02C3496.11 459.581 3477.84 462.014 3459.33 464.347C3440.83 466.679 3422.12 468.891 3403.25 471C3384.35 473.118 3365.38 475.166 3346.29 477.127C3327.2 479.087 3308.09 481.021 3288.93 482.839C3269.76 484.656 3250.64 486.453 3231.53 488.177C3212.41 489.9 3193.39 491.548 3174.4 493.138C3155.42 494.728 3136.51 496.252 3117.75 497.779C3098.98 499.306 3080.26 500.777 3061.69 502.214C3042.38 503.707 3023.2 505.141 3004.07 506.407C2984.95 507.673 2965.82 508.729 2946.72 509.627C2927.62 510.526 2908.63 511.302 2889.67 511.957C2870.74 512.602 2851.87 513.181 2833.12 513.673C2814.36 514.165 2795.72 514.57 2777.18 514.925C2758.64 515.281 2740.2 515.559 2721.82 515.735C2703.44 515.91 2685.17 516.036 2667.01 516.074C2648.84 516.123 2630.81 516.139 2612.9 516.131C2595 516.123 2577.2 516.103 2559.6 516.102C2541.99 516.102 2524.5 516.115 2507.1 516.125C2489.73 516.125 2472.43 516.159 2455.26 516.206C2438.09 516.253 2421.07 516.404 2404.19 516.569C2387.32 516.76 2370.56 517.012 2353.93 517.34C2337.31 517.669 2320.82 518.075 2304.46 518.531C2288.1 518.986 2271.84 519.54 2255.72 520.133C2239.6 520.726 2223.6 521.444 2207.78 522.291C2191.95 523.139 2176.17 524.003 2160.49 524.928C2144.79 525.863 2129.17 526.831 2113.61 527.879C2098.04 528.928 2082.58 530.074 2067.19 531.29C2051.83 532.532 2036.56 533.872 2021.4 535.372C2006.25 536.872 1991.23 538.486 1976.35 540.287C1961.47 542.088 1946.74 544.067 1932.17 546.259C1917.6 548.452 1903.18 550.821 1888.95 553.459C1874.7 556.069 1860.67 558.937 1846.83 562.036C1832.99 565.135 1819.32 568.511 1805.9 572.161C1792.49 575.812 1779.24 579.74 1766.24 583.943C1753.25 588.145 1740.46 592.678 1727.93 597.486C1715.4 602.294 1703.07 607.433 1691 612.846C1678.91 618.269 1667.06 624.003 1655.45 630.021C1643.84 636.039 1632.46 642.379 1621.29 648.976C1610.12 655.572 1599.16 662.464 1588.45 669.629C1577.71 676.778 1567.19 684.174 1556.84 691.784C1546.48 699.394 1536.33 707.262 1526.36 715.297C1516.39 723.332 1506.55 731.555 1496.9 739.944C1487.24 748.334 1477.71 756.874 1468.33 765.565C1458.94 774.256 1449.69 783.06 1440.57 791.952C1431.44 800.843 1422.43 809.858 1413.48 818.917C1404.53 827.976 1395.72 837.112 1386.99 846.281C1378.24 855.461 1369.6 864.664 1360.99 873.883C1352.39 883.103 1343.88 892.346 1335.4 901.58C1326.92 910.813 1318.51 920.016 1310.14 929.2C1301.77 938.383 1293.42 947.52 1285.14 956.627C1276.85 965.733 1268.58 974.767 1260.32 983.753C1252.07 992.74 1243.85 1001.64 1235.65 1010.46C1227.45 1019.28 1219.25 1028.03 1211.05 1036.64C1202.84 1045.25 1194.66 1053.81 1186.49 1062.22C1178.32 1070.64 1170.14 1078.96 1161.96 1087.16C1153.78 1095.37 1145.6 1103.43 1137.42 1111.39C1129.24 1119.35 1121.04 1127.17 1112.84 1134.86C1104.64 1142.54 1096.44 1150.11 1088.24 1157.55C1080.03 1164.99 1071.79 1172.26 1063.57 1179.42C1055.34 1186.59 1047.06 1193.56 1038.81 1200.41C1030.54 1207.27 1022.28 1213.99 1013.97 1220.55C1005.65 1227.11 997.369 1233.55 989.075 1239.86C980.781 1246.16 972.437 1252.28 964.101 1258.28C955.764 1264.29 947.438 1270.14 939.08 1275.87C930.721 1281.6 922.373 1287.19 913.956 1292.55C905.539 1297.92 897.034 1303.04 888.463 1307.91C879.892 1312.78 871.234 1317.4 862.488 1321.78C844.998 1330.5 827.309 1338.47 809.39 1345.54C791.471 1352.61 773.318 1358.83 754.989 1364.28C736.659 1369.73 718.23 1374.51 699.816 1378.79C688.57 1381.41 677.259 1383.77 665.982 1385.94C654.706 1388.11 643.42 1390.1 632.17 1391.9C620.919 1393.7 609.659 1395.33 598.454 1396.79C587.248 1398.25 576.074 1399.55 564.933 1400.7C553.791 1401.85 542.701 1402.86 531.703 1403.77C520.704 1404.67 509.754 1405.48 498.915 1406.2C482.637 1407.26 466.566 1408.08 450.694 1408.74C434.823 1409.39 419.236 1409.88 403.888 1410.26C388.54 1410.65 373.495 1410.89 358.769 1411.09C344.023 1411.26 329.616 1411.39 315.529 1411.44C301.443 1411.49 287.734 1411.54 274.366 1411.51C260.999 1411.47 248.01 1411.44 235.379 1411.39C222.748 1411.34 210.537 1411.27 198.704 1411.21C186.872 1411.15 175.479 1411.09 164.464 1411.04C142.455 1410.93 122.16 1410.93 103.642 1411.02C85.1232 1411.12 68.362 1411.3 53.4588 1411.62C38.5556 1411.94 25.4566 1412.28 14.1818 1412.63C2.90695 1412.99 -6.54239 1413.36 -14.1019 1413.71C-29.2209 1414.41 -36.9947 1414.82 -36.9947 1414.82L-37.0355 1414.81Z";
+// warmth ramp: blue → cream → yellow (via cream, to avoid a muddy green midpoint).
+function _hx(h) { h = h.replace("#", ""); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function _mix(a, b, t) { const A = _hx(a), B = _hx(b); return `rgb(${Math.round(A[0]+(B[0]-A[0])*t)},${Math.round(A[1]+(B[1]-A[1])*t)},${Math.round(A[2]+(B[2]-A[2])*t)})`; }
+function _ramp(cool, warm, t) { const cream = "#F4EFE4"; return t <= 0.5 ? _mix(cool, cream, t*2) : _mix(cream, warm, (t-0.5)*2); }
+
+// Background: the branded papercut. `warmth` (0..1) ramps the gradient blue → yellow for the Reflect
+// mood (0 = on edge/blue, 1 = calm/yellow), and carries into Homework/Done; when a `breath` is passed
+// (Practice) the two wave layers rise/settle with the breath.
+function BreathBackground({ warmth = 0, breath = null }) {
+  const skyTop = _ramp("#B9DCFF", "#FFF58C", warmth); // sky: blue → sun yellow
+  const wave   = _ramp("#BADCFF", "#F6DE84", warmth); // papercut waves: blue → warm gold
+  const breathing = !!breath;
+  const inhale = breathing && breath.phase === "in";
+  const dur = breathing ? breath.dur : 6;
+  const ease = "cubic-bezier(.37,0,.63,1)";
+  const base = { transformBox: "view-box", transformOrigin: "960px 1080px", transition: "transform " + dur + "s " + ease };
+  // waves swell + rise on the in-breath, settle on the out-breath (parallax: front rises more)
+  const w1 = { ...base, transform: inhale ? "translateY(-58px) scaleY(1.065)" : "translateY(0px) scaleY(1)" };
+  const w2 = { ...base, transform: inhale ? "translateY(-30px) scaleY(1.035)" : "translateY(0px) scaleY(1)" };
+  return (
+    <div className="breathe2">
+      <svg className="paper-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="pcp0" x1="1953" y1="540" x2="0" y2="576.5" gradientUnits="userSpaceOnUse">
+            <stop stopColor={skyTop} /><stop offset="1" stopColor="#FFF2EB" />
+          </linearGradient>
+          <linearGradient id="pcp1" x1="1080.5" y1="167.5" x2="797.372" y2="699.405" gradientUnits="userSpaceOnUse">
+            <stop offset="0.15" stopColor={wave} stopOpacity="0" /><stop offset="0.85" stopColor={wave} />
+          </linearGradient>
+          <linearGradient id="pcp2" x1="1028.5" y1="1473" x2="2191.78" y2="626.261" gradientUnits="userSpaceOnUse">
+            <stop offset="0.15" stopColor={wave} stopOpacity="0" /><stop offset="0.85" stopColor={wave} />
+          </linearGradient>
+        </defs>
+        <rect width="1920" height="1080" fill="#F2F1E6" />
+        <rect width="1920" height="1080" fill="url(#pcp0)" />
+        <g style={w1}><g className="wave-drift-1"><path d={WAVE1_D} fill="url(#pcp1)" fillOpacity="0.9" /></g></g>
+        <g style={w2}><g className="wave-drift-2"><path d={WAVE2_D} fill="url(#pcp2)" fillOpacity="0.9" /></g></g>
+      </svg>
+    </div>
+  );
+}
+
+// Foreground: phase text, timer and the play/pause control (no ambience picker in Concept 3).
+function BreathControls({ breath }) {
+  return (
+    <div className={"breath-ui breath-practice is-" + breath.phase}>
+      {/* time, title, description and control all centered together — the breath graphic
+          expands and contracts around this cluster. */}
+      <div className="bp-hero">
+        <span className="b2-time">{breath.timeText}</span>
+        <span className="b2-phase">{breath.phaseWord}</span>
+        <p className="b2-sub">Let the exhale be longer than the inhale.</p>
+        <Button variant="filled"
+          leadingIcon={breath.done ? <IcRepeat size={18} /> : breath.running ? <IcPause size={18} /> : <IcPlay size={18} />}
+          onClick={breath.onPlay}>
+          {breath.done ? "Again" : breath.running ? "Pause" : breath.phase === "paused" ? "Resume" : "Begin"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// --- Breath visuals (Concept 3): selectable, calming breathing animations -------------------
+// Shared target: how "open" the visual is (in→1, out→0, small at rest) and the transition
+// duration paced to the current phase, so every visual breathes with the 4s/6s timer.
+function _bt(breath) {
+  const p = breath.phase;
+  const open = p === "in" ? 1 : p === "out" ? 0 : p === "done" ? 0.55 : 0.12;
+  const active = p === "in" || p === "out";
+  const dur = active ? breath.dur : 0.9;
+  const ease = "cubic-bezier(.37,0,.63,1)";
+  return { open, dur, tr: `transform ${dur}s ${ease}, opacity ${dur}s ${ease}` };
+}
+
+// Aura — a luminous layered orb that brightens + expands on the in-breath.
+function VisAura({ breath }) {
+  const { open, tr } = _bt(breath);
+  const s = 0.74 + open * 0.46, g = 0.55 + open * 0.45;
+  const layer = (cls, sc, op) => <div className={"aura-l " + cls} style={{ transform: `scale(${sc})`, opacity: op, transition: tr }} />;
+  return <div className="vis">{layer("aura-out", s * 1.35, g * 0.42)}{layer("aura-mid", s * 1.15, g * 0.7)}{layer("aura-core", s, g)}</div>;
+}
+
+// Ripple — concentric rings that scale with the breath, over a gentle constant emanation.
+function VisRipple({ breath }) {
+  const { open, tr } = _bt(breath);
+  const s = 0.72 + open * 0.5;
+  return (
+    <div className="vis">
+      <span className="rip-pulse" /><span className="rip-pulse d2" />
+      <div className="rip-wrap" style={{ transform: `scale(${s})`, transition: tr }}>
+        <span className="rip r4" /><span className="rip r3" /><span className="rip r2" /><span className="rip r1" />
+        <span className="rip-core" />
+      </div>
+    </div>
+  );
+}
+
+// Bloom — a radial mandala whose petals open on the in-breath. Petals are anchored to the center
+// and placed with a translate/rotate that stays robust under the layer's scale.
+function VisBloom({ breath }) {
+  const { open, tr } = _bt(breath);
+  const N = 8, spread = 72 + open * 66, ps = 0.8 + open * 0.42;
+  return (
+    <div className="vis">
+      {Array.from({ length: N }).map((_, i) => (
+        <span key={i} className="petal"
+          style={{ transform: `translate(-50%,-50%) rotate(${i * (360 / N) + open * 20}deg) translateY(-${spread}px) scale(${ps})`, transition: tr }} />
+      ))}
+      <span className="bloom-core" style={{ transform: `translate(-50%,-50%) scale(${0.75 + open * 0.5})`, transition: tr }} />
+    </div>
+  );
+}
+
+// Aurora — soft drifting mesh-gradient clouds that swell with the breath.
+function VisAurora({ breath }) {
+  const { open, dur, tr } = _bt(breath);
+  const s = 0.85 + open * 0.4, op = 0.62 + open * 0.38;
+  return (
+    <div className="vis" style={{ opacity: op, transition: `opacity ${dur}s ease` }}>
+      <div className="aur-blob b1" style={{ transform: `scale(${s})`, transition: tr }} />
+      <div className="aur-blob b2" style={{ transform: `scale(${s * 1.12})`, transition: tr }} />
+      <div className="aur-blob b3" style={{ transform: `scale(${s * 0.9})`, transition: tr }} />
+    </div>
+  );
+}
+
+// Orbit — a constellation ring that expands on the in-breath, with a gentle twinkle. Dots are
+// anchored to center and placed by trig translate (no fragile rotate-in-a-zero-box pattern).
+function VisOrbit({ breath }) {
+  const { open, tr } = _bt(breath);
+  const N = 12, radius = 112 + open * 84, ds = 0.85 + open * 0.5, spin = open * 0.5;
+  return (
+    <div className="vis">
+      {Array.from({ length: N }).map((_, i) => {
+        const a = (i / N) * 2 * Math.PI - Math.PI / 2 + spin;
+        const x = Math.cos(a) * radius, y = Math.sin(a) * radius;
+        return <span key={i} className="odot"
+          style={{ transform: `translate(-50%,-50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${ds})`, transition: tr }} />;
+      })}
+      <span className="orbit-core" style={{ transform: `translate(-50%,-50%) scale(${0.7 + open * 0.5})`, transition: tr }} />
+    </div>
+  );
+}
+
+// Glow — a liquid gradient orb rendered with a WebGL fragment shader (domain-warped fractal noise)
+// for true flowing, wispy motion. The breath drives the swell, brightness and flow speed.
+const GLOW_FS = `
+precision highp float;
+uniform vec2 uRes; uniform float uTime; uniform float uOpen;
+vec2 hash22(vec2 p){ p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))); return -1.0+2.0*fract(sin(p)*43758.5453123); }
+float noise(vec2 p){
+  vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+  return mix(mix(dot(hash22(i+vec2(0.0,0.0)),f-vec2(0.0,0.0)), dot(hash22(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),
+             mix(dot(hash22(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)), dot(hash22(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),u.y);
+}
+float fbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p=p*2.02; a*=0.5; } return v; }
+void main(){
+  vec2 uv=(gl_FragCoord.xy-0.5*uRes)/(0.5*uRes.y);
+  float r=length(uv);
+  float t=uTime*(0.06+uOpen*0.04);
+  // two-level domain warp — flows across the whole orb, including the center
+  vec2 q=vec2(fbm(uv*1.7+vec2(0.0,t)), fbm(uv*1.7+vec2(4.3,-t)));
+  vec2 w=vec2(fbm(uv*1.7+2.0*q+vec2(1.7,9.2)+0.5*t), fbm(uv*1.7+2.0*q+vec2(8.3,2.8)-0.4*t));
+  float f=clamp(fbm(uv*1.7+3.0*w)*0.5+0.5,0.0,1.0);
+  // ComPsych brand-blue palette + a light center (keeps the overlaid text legible)
+  vec3 deep=vec3(0.02,0.22,0.55), brand=vec3(0.06,0.46,0.88), sky=vec3(0.46,0.76,1.0), cyan=vec3(0.68,0.93,1.0), lightC=vec3(0.88,0.95,1.0);
+  float rr=smoothstep(0.0,1.05,r);                 // 0 center -> 1 edge
+  vec3 col=mix(lightC, brand, rr);                 // light center -> brand blue
+  col=mix(col, deep, smoothstep(0.70,1.04,r));     // deep-blue rim for standout
+  // flowing tonal bands + cyan caustic veins — organic movement across the whole orb, incl. center
+  col += (f-0.5)*0.58*mix(vec3(0.16,0.38,0.88), vec3(0.46,0.76,1.0), 1.0-rr);
+  float ctr=smoothstep(0.75,0.0,r);
+  float veins=smoothstep(0.66,1.05,clamp(length(w),0.0,1.5));
+  col=mix(col, cyan, veins*(0.32+0.52*ctr));
+  // a second, finer flow adds swirling detail through the middle
+  float fine=fbm(uv*3.4 + 4.0*w + vec2(-t*0.8, t*0.6));
+  col += (fine)*0.16*ctr*vec3(0.35,0.6,1.0);
+  // subtle, slowly-drifting sheen (kept light so the flow reads through it)
+  vec2 sc=vec2(-0.30+0.07*sin(t*0.6),0.42+0.05*cos(t*0.5));
+  col+=smoothstep(0.86,0.0,length(uv-sc))*0.10;
+  col*=mix(0.95,1.1,uOpen);
+  float orbR=0.86+uOpen*0.1;
+  float alpha=smoothstep(orbR,orbR-0.03,r);
+  float rim=smoothstep(orbR-0.05,orbR-0.005,r)*(1.0-smoothstep(orbR-0.005,orbR+0.02,r));
+  col+=rim*vec3(0.80,0.92,1.0)*0.6;
+  col=clamp(col,0.0,1.4);
+  gl_FragColor=vec4(col*alpha, alpha);
+}`;
+function VisGlow({ breath }) {
+  const canvasRef = React.useRef(null);
+  const stateRef = React.useRef({ target: 0.12, dur: 0.9, cur: 0.12 });
+  const { open, dur } = _bt(breath);
+  stateRef.current.target = open;
+  stateRef.current.dur = dur;
+  const halo = 0.5 + open * 0.5;
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: true });
+    if (!gl) return; // fall back to the CSS .glow-orb gradient behind
+    const vs = "attribute vec2 aPos; void main(){ gl_Position=vec4(aPos,0.0,1.0); }";
+    const mk = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, mk(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, GLOW_FS));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+    const aPos = gl.getAttribLocation(prog, "aPos"); gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+    const uTime = gl.getUniformLocation(prog, "uTime"), uOpen = gl.getUniformLocation(prog, "uOpen"), uRes = gl.getUniformLocation(prog, "uRes");
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const resize = () => { const b = canvas.getBoundingClientRect(); canvas.width = Math.max(2, Math.round(b.width * dpr)); canvas.height = Math.max(2, Math.round(b.height * dpr)); gl.viewport(0, 0, canvas.width, canvas.height); };
+    resize();
+    let raf, start = performance.now(), last = start;
+    const loop = (now) => {
+      const dt = (now - last) / 1000; last = now;
+      const st = stateRef.current;
+      st.cur += (st.target - st.cur) * (1.0 - Math.exp(-dt * 3.0 / Math.max(0.1, st.dur)));
+      gl.uniform1f(uTime, (now - start) / 1000);
+      gl.uniform1f(uOpen, st.cur);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); gl.deleteProgram(prog); gl.deleteBuffer(buf); };
+  }, []);
+
+  return (
+    <div className="vis">
+      <div className="glow">
+        <div className="glow-shadow" />
+        <div className="glow-halo" style={{ opacity: halo, transition: `opacity ${dur}s ease` }} />
+        <div className="glow-orb" />
+        <canvas ref={canvasRef} className="glow-canvas" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
+
+// Particles — a volumetric particle-sphere via real CSS 3D transforms (original).
+function VisParticles({ breath }) {
+  const { open, tr } = _bt(breath);
+  const R = 148 + open * 66, N = 172;
+  const pts = React.useMemo(() => {
+    const arr = [], ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i / (N - 1)) * 2;
+      const r = Math.sqrt(Math.max(0, 1 - y * y));
+      const th = i * ga;
+      arr.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r });
+    }
+    return arr;
+  }, []);
+  return (
+    <div className="vis ps-perspective">
+      <div className="ps-spin">
+        {pts.map((p, i) => {
+          const blue = p.x >= 0;
+          return <span key={i} className="pdot" style={{
+            transform: `translate3d(${(p.x * R).toFixed(1)}px, ${(p.y * R).toFixed(1)}px, ${(p.z * R).toFixed(1)}px)`,
+            background: blue ? "radial-gradient(circle,#bcd6ff,#3b7ae0)" : "radial-gradient(circle,#f4b0f2,#c93bd6)",
+            boxShadow: blue ? "0 0 9px rgba(90,150,255,.7)" : "0 0 9px rgba(220,90,220,.7)",
+            transition: tr,
+          }} />;
+        })}
+      </div>
+      {/* fade the central particles so they don't overlay the title/description/button */}
+      <div className="ps-fog" />
+    </div>
+  );
+}
+
+// Particles 2 — light-mode, on-brand variant. Lives on the papercut background; particles run a
+// vertical brand gradient (sky at the top → deep navy at the base) with a soft glossy bead highlight.
+function VisParticles2({ breath }) {
+  const { open, tr } = _bt(breath);
+  const R = 148 + open * 66, N = 172;
+  const pts = React.useMemo(() => {
+    const arr = [], ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i / (N - 1)) * 2;
+      const r = Math.sqrt(Math.max(0, 1 - y * y));
+      const th = i * ga;
+      arr.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r });
+    }
+    return arr;
+  }, []);
+  return (
+    <div className="vis ps-perspective">
+      <div className="ps-spin">
+        {pts.map((p, i) => {
+          // Brand duotone — one hemisphere ComPsych blue, the other brand gold/orange. The two hues
+          // are never blended through gray (which reads muddy/brown); instead they meet through a
+          // luminous seam (lightness lift within each hue), Apple-style. Top dots run a touch
+          // brighter for volume, so the sphere reads dimensional as it spins.
+          const az = Math.atan2(p.z, p.x);   // -π..π around the sphere
+          const side = Math.cos(az);          // >0 warm side, <0 cool side
+          const warm = side > 0;
+          const lift = (p.y + 1) / 2;         // 0 at base → 1 at crown
+          const h = warm ? 34 : 212;          // brand gold  /  ComPsych blue
+          const s = warm ? 92 : 90;
+          const seam = 1 - Math.min(1, Math.abs(side) / 0.22); // 0..1 near the meeting line
+          const l = (warm ? 54 + lift * 13 : 52 + lift * 15) + seam * 16;
+          const col = `hsl(${h}, ${s}%, ${l.toFixed(0)}%)`;
+          const hl = `hsl(${h}, 100%, ${Math.min(95, l + 22).toFixed(0)}%)`;
+          return <span key={i} className="pdot2" style={{
+            transform: `translate3d(${(p.x * R).toFixed(1)}px, ${(p.y * R).toFixed(1)}px, ${(p.z * R).toFixed(1)}px)`,
+            background: `radial-gradient(circle at 34% 30%, ${hl}, ${col})`,
+            boxShadow: `0 0 10px hsla(${h}, 96%, 60%, .5)`,
+            transition: tr,
+          }} />;
+        })}
+      </div>
+      {/* clear the center so the navy title/description/button stay legible on the light field */}
+      <div className="ps2-haze" />
+    </div>
+  );
+}
+
+const BREATH_VISUALS = [
+  { id: "particles", name: "Particles", Comp: VisParticles, dark: true },
+  { id: "particles2", name: "Particles 2", Comp: VisParticles2 },
+  { id: "glow",      name: "Glow",      Comp: VisGlow },
+  { id: "aura",      name: "Aura",      Comp: VisAura },
+  { id: "ripple",    name: "Ripple",    Comp: VisRipple },
+  { id: "bloom",     name: "Bloom",     Comp: VisBloom },
+  { id: "aurora",    name: "Aurora",    Comp: VisAurora },
+  { id: "orbit",     name: "Orbit",     Comp: VisOrbit },
+  { id: "papercut",  name: "Papercut",  Comp: null }, // the original: the papercut waves breathe
+];
+
+// Renders the selected breath visual (keyed so switching replays its fade-in). Papercut → null,
+// since that option is driven by the papercut background itself.
+function BreathVisualLayer({ id, breath }) {
+  const v = BREATH_VISUALS.find(x => x.id === id);
+  if (!v || !v.Comp) return null;
+  const Comp = v.Comp;
+  // dim until breathing is actually under way (in/out), for stronger text contrast on ready/paused/done
+  const active = breath.phase === "in" || breath.phase === "out";
+  return <div className={"breath-visual" + (active ? "" : " is-dim")} key={id}><Comp breath={breath} /></div>;
+}
+
+// Comparison shell — a floating segmented control to switch breath visuals live on Practice.
+function BreathVisualPicker({ value, onChange }) {
+  return (
+    <div className="bvis-picker">
+      <span className="bvis-label">Breath visual</span>
+      <div className="bvis-seg">
+        {BREATH_VISUALS.map(v => (
+          <button key={v.id} className={"bvis-btn" + (value === v.id ? " on" : "")} onClick={() => onChange(v.id)}>{v.name}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Foreground for Reflect — same immersive frame as Practice: "How's your body now?" + a mood
+// slider that warms the papercut from blue (on edge) toward yellow (calm).
+function ReflectSlider({ value, onChange, lo = "On edge", hi = "Calm" }) {
+  const pct = Math.round(value * 100);
+  return (
+    <div className="rslider">
+      <div className="rslider-track">
+        <span className="rslider-thumb" style={{ left: "calc(" + value + " * (100% - 34px) + 17px)" }} />
+        <input type="range" min="0" max="100" value={pct}
+          onChange={e => onChange(+e.target.value / 100)} aria-label="How clear does it feel now?" />
+      </div>
+      <div className="rslider-scale"><span>{lo}</span><span>{hi}</span></div>
+    </div>
+  );
+}
+// Reflect (Solving) — a quick clarity check-in. The papercut warms blue → gold as you slide toward
+// "clearer", and that shade carries through Homework + Done as a small reward for the work.
+function ReflectControls({ value, onChange }) {
+  return (
+    <div className="breath-ui reflect-ui">
+      <div className="b2-center">
+        <MoodFace t={value} size={104} />
+        <div className="b2-head">
+          <span className="b2-phase">How does it feel now?</span>
+          <p className="b2-sub">Slide to match how clear things feel with this written down instead of circling in your head.</p>
+        </div>
+        <ReflectSlider value={value} onChange={onChange} lo="Still circling" hi="Much clearer" />
+      </div>
+    </div>
+  );
+}
+
+// Foreground for Homework — the immersive frame: big title + DS description, then the three options
+// the user wrote in Practice, presented as selection cards. Picking one sets it as their next step.
+function HomeworkControls({ data, onPick }) {
+  return (
+    <div className="breath-ui home-ui">
+      <div className="b2-center">
+        <div className="home-head">
+          <span className="b2-phase">One small action</span>
+          <p className="home-desc">Choose the one option you'll actually try before the next module — even a first phone call counts.</p>
+        </div>
+        <div className="home-options">
+          {data.options.map((o, i) => (
+            <SelectionCard key={i} selected={data.chosen === i} leadingIcon={<span className="opt-badge">{i + 1}</span>}
+              text={o && o.trim() ? o : ("Option " + (i + 1))} onClick={() => onPick(i)} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Ambient "ideas taking form" glow behind the Practice workspace. On Define, a single calm orb; on
+// Brainstorm, three orbs that brighten as each idea is written. Decorative, authored from scratch.
+function SolveAmbience({ stage, data }) {
+  if (stage === 0) {
+    return <div className="solve-amb"><span className="amb-blob amb-c show" /></div>;
+  }
+  return (
+    <div className="solve-amb">
+      {[0, 1, 2].map(i => {
+        const filled = data.options[i] && data.options[i].trim();
+        return <span key={i} className={"amb-blob amb-o" + i + (filled ? " show" : " dim")} />;
+      })}
+    </div>
+  );
+}
+
+// Foreground for Practice — Solving's immersive core. Two sub-stages cross-dissolve in place:
+//   0 Define      — name one problem in a large glass workspace
+//   1 Brainstorm  — list three approaches as numbered idea rows (with the problem recapped above)
+function PracticeControls({ stage, data, set }) {
+  const [shown, setShown] = useState(stage);
+  const [vis, setVis] = useState(true);
+  React.useEffect(() => {
+    if (stage === shown) return;
+    setVis(false);
+    const t = setTimeout(() => { setShown(stage); setVis(true); }, 240);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  const s = SENSES[shown];
+  const vals = data.entries[s.key];
+  const setVal = (i, v) => set({ ...data, entries: { ...data.entries, [s.key]: vals.map((x, k) => k === i ? v : x) } });
+  const filled = vals.filter(v => v && v.trim()).length;
+  const complete = filled >= s.n;
+
+  return (
+    <div className="breath-ui solve-ui ground-ui">
+      <div className="b2-center">
+        <div className={"solve-stage " + (vis ? "in" : "out")}>
+          <div className="solve-head">
+            <span className="step-kicker">{"Ground · " + (shown + 1) + " of 5"}</span>
+            <span className="b2-phase">{s.title}</span>
+            <p className="intro-lede">{s.hint}</p>
+          </div>
+          <div className="grd-fields">
+            {vals.map((v, i) => (
+              <input key={i} className="sr-input grd-input" placeholder={i === 0 ? s.ph + "…" : "…and another"}
+                value={v} onChange={e => setVal(i, e.target.value)} />
+            ))}
+          </div>
+          <p className={"grd-note" + (complete ? " done" : "")}>
+            {complete ? "Nicely done — rest your attention here for a moment." : (filled + " of " + s.n + " named")}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Foreground for Intro — an Apple-style hero. Two grouped zones: the MESSAGE (accent eyebrow,
+// hero title, one-line subhead) and the ACTION (primary CTA with a quiet reassurance caption
+// beneath it, right where the decision is made).
+function IntroControls({ onStart }) {
+  return (
+    <div className="breath-ui intro-ui">
+      <div className="b2-center">
+        <div className="intro-head">
+          <span className="step-kicker">In-Between Care · Grounding</span>
+          <span className="b2-phase">Come back to right now</span>
+          <p className="intro-lede">
+            When your mind won't stop looping, your five senses are a simple way back — five to see,
+            four to hear, on down to one. Nothing to get right.
+          </p>
+          <span className="intro-meta">About 2 min · Grounding</span>
+        </div>
+        <div className="intro-actions">
+          <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={onStart}>Begin</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Foreground for Learn — immersive: title + lede + a row of 3 glass "pattern" cards (in 4 / out 6 / repeat).
+function LearnControls() {
+  const steps = [
+    { num: "1", k: "Name",    copy: "Get the problem down to one clear sentence." },
+    { num: "2", k: "Brainstorm", copy: "List a few ways through — even imperfect ones." },
+    { num: "3", k: "Weigh",   copy: "Notice which feel realistic to actually try." },
+    { num: "4", k: "Pick one", copy: "Choose a single next step to start with." },
+  ];
+  return (
+    <div className="breath-ui learn-ui">
+      <div className="b2-center">
+        <div className="learn-head">
+          <span className="step-kicker">How it works</span>
+          <span className="b2-phase">A workable process, not a perfect answer</span>
+          <p className="learn-lede">
+            Effective problem-solving isn't about the flawless solution — it's four small moves you
+            can repeat on any stressor.
+          </p>
+        </div>
+        <div className="learn-steps">
+          {steps.map((s, i) => (
+            <div className="learn-card" key={i}>
+              <span className="learn-num">{s.num != null ? s.num : s.icon}</span>
+              <span className="learn-k">{s.k}</span>
+              <p className="learn-copy">{s.copy}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Foreground for Done — same immersive frame: a check medallion, the closing affirmation,
+// and a recap of the reset + the moment the user chose (carrying the mood color through).
+function SummaryControls({ data }) {
+  return (
+    <div className="breath-ui done-ui">
+      <div className="b2-center">
+        <div className="medallion solid"><IcCheck size={30} /></div>
+        <div className="b2-head">
+          <span className="b2-phase">You're back in the room.</span>
+          <p className="b2-sub">Noticing your senses pulls your attention out of the loop and into the present.</p>
+        </div>
+        <div className="done-recap">
+          <div className="done-row">
+            <span className="done-label">What you just did</span>
+            <span className="done-val">A five-senses walk — five to see, four to hear, three to feel, two to smell, one to taste.</span>
+          </div>
+          <div className="done-div" />
+          <div className="done-row">
+            <span className="done-label">Keep it close</span>
+            <span className="done-val">Run it anytime the noise picks up — in line, before a meeting, or last thing at night.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Screen 4 — Reflection (legacy faces version, unused in Concept 3's immersive Reflect)
+function Reflection({ data, set }) {
+  return (
+    <>
+      <Title eyebrow="Reflect" title="How's your body now?">
+        A slower out-breath nudges your nervous system toward calm. Notice where you are right now —
+        even a small shift counts.
+      </Title>
+      <NonSystem_MoodFaces value={data.mood} onChange={v => set({ ...data, mood: v })} />
+    </>
+  );
+}
+
+/* A single mood face — expression + color warm up from tense (0) to calm (n-1). */
+function MoodFace({ level, n, t: tProp, size = 54 }) {
+  const t = tProp != null ? tProp : (n > 1 ? level / (n - 1) : 0.5);
+  const lerp = (a, b) => Math.round(a + (b - a) * t);
+  // color tracks the papercut: blue at rest (on the blue papercut) → warm yellow as you slide to calm
+  const color = `rgb(${lerp(111, 255)}, ${lerp(168, 202)}, ${lerp(232, 78)})`;
+  const curve = t * 10;                                                        // mouth: flat → smile (never a frown)
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" fill={color} />
+      <circle cx="17.5" cy="20" r="2.6" fill="#37342f" />
+      <circle cx="30.5" cy="20" r="2.6" fill="#37342f" />
+      <path d={`M16 30 Q24 ${30 + curve} 32 30`} stroke="#37342f" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* NonSystem_MoodFaces — a row of selectable faces (replaces the slider in Concept 3).
+ * Each face highlights on hover; the chosen one stays highlighted. */
+const MOOD_FACE_WORDS = ["On edge", "Tense", "Uneasy", "Okay", "Settling", "Calmer", "Calm"];
+function NonSystem_MoodFaces({ value, onChange }) {
+  const [hover, setHover] = useState(null);
+  const active = hover != null ? hover : value;
+  return (
+    <div className="mfaces">
+      <div className={"mfaces-word" + (active == null ? " ph" : "")}>
+        {active != null ? MOOD_FACE_WORDS[active] : "Tap how you feel right now"}
+      </div>
+      <div className="mfaces-row" onMouseLeave={() => setHover(null)}>
+        {MOOD_FACE_WORDS.map((w, i) => (
+          <button key={i} type="button" aria-label={w} aria-pressed={value === i}
+            className={"mface" + (value === i ? " sel" : "") + (hover === i ? " hov" : "")}
+            onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}
+            onClick={() => onChange(i)}>
+            <MoodFace level={i} n={MOOD_FACE_WORDS.length} />
+          </button>
+        ))}
+      </div>
+      <div className="mfaces-scale"><span>On edge</span><span>Calm</span></div>
+      <div className="ns-note">NonSystem_MoodFaces — pending a published Sunrise mood component.</div>
+    </div>
+  );
+}
+
+// Screen 5 — Homework
+function Homework({ data, set }) {
+  return (
+    <>
+      <Title eyebrow="Homework" title="Pick your moment">
+        This tool works best when it's ready before you need it. Choose one moment this week where
+        you'll run one minute of paced breathing.
+      </Title>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {CUES.map((c, i) => (
+          <SelectionCard key={i} selected={data.cue === i} leadingIcon={<IcWind size={20} />}
+            text={c} onClick={() => set({ ...data, cue: i })} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+// Screen 6 — Summary
+function Summary({ data }) {
+  const cue = data.cue != null ? CUES[data.cue] : "";
+  return (
+    <>
+      <div className="medallion solid"><IcCheck size={30} /></div>
+      <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)" }}>
+        You don't need a quiet room or ten minutes — one minute of longer exhales can down-shift your
+        whole nervous system.
+      </h1>
+      <Card>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>Your reset</span>
+            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>Paced breathing — in for 4, out for 6, for about a minute.</p>
+          </div>
+          <Divider />
+          <div>
+            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>When you'll use it</span>
+            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{cue && cue.trim() ? cue : "—"}</p>
+          </div>
+        </div>
+      </Card>
+    </>
+  );
+}
+
+/* ============================================================
+ * App — module player shell + prototype controls
+ * ============================================================ */
+const STEPS = [
+  { key: "intro",  label: "Start",  slug: "intro" },
+  { key: "ground", label: "Ground", slug: "ground" },
+  { key: "done",   label: "Done",   slug: "done" },
+];
+
+const SENSE_LAST = 4; // ground sub-stages: see(0) hear(1) feel(2) smell(3) taste(4)
+
+const SENSES = [
+  { key: "see",   n: 5, title: "Five things you can see",   hint: "A color, a shape, the way the light falls — anything at all.", ph: "Something you can see" },
+  { key: "hear",  n: 4, title: "Four things you can hear",  hint: "Near or far — a hum, a voice, even your own breath.", ph: "Something you can hear" },
+  { key: "feel",  n: 3, title: "Three things you can feel", hint: "Your feet on the floor, the chair, the air on your skin.", ph: "Something you can feel" },
+  { key: "smell", n: 2, title: "Two things you can smell",  hint: "Coffee, fresh air — or nothing in particular. That counts too.", ph: "Something you can smell" },
+  { key: "taste", n: 1, title: "One thing you can taste",   hint: "A sip of water, the last thing you ate, or just the air.", ph: "Something you can taste" },
+];
+
+// per-sense text entries, one blank per item to notice (5 for see, 4 for hear, …)
+function emptyEntries() {
+  var o = {};
+  SENSES.forEach(function (s) { var a = []; for (var i = 0; i < s.n; i++) a.push(""); o[s.key] = a; });
+  return o;
+}
+
+function App() {
+  const [idx, setIdx] = useState(0);
+  const [shownIdx, setShownIdx] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const [senseIdx, setSenseIdx] = useState(0);
+  const [data, setData] = useState({ entries: emptyEntries() });
+
+  // Shell bridge: read step + progress and hydrate the sibling look (Utility ↔ Immersion) without a
+  // reload. The per-sense tap counts transfer, plus the current sense via _ex.
+  React.useEffect(() => {
+    function onMsg(e) {
+      var m = e && e.data;
+      if (!m || typeof m !== "object") return;
+      if (m.type === "reset:getState") {
+        var w = e.source || window.parent;
+        if (w) w.postMessage({ type: "reset:state", idx: idx, data: { entries: data.entries, _ex: senseIdx } }, "*");
+      } else if (m.type === "reset:next") {
+        setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); });
+      } else if (m.type === "reset:prev") {
+        setIdx(function (i) { return Math.max(i - 1, 0); });
+      } else if (m.type === "reset:setState") {
+        if (typeof m.idx === "number") { setIdx(m.idx); setShownIdx(m.idx); setLeaving(false); }
+        if (m.data && typeof m.data === "object") {
+          var inc = Object.assign({}, m.data);
+          if (typeof inc._ex === "number") setSenseIdx(inc._ex);
+          delete inc._ex;
+          setData(function (d) { return Object.assign({}, d, inc); });
+        }
+      }
+    }
+    window.addEventListener("message", onMsg);
+    return function () { window.removeEventListener("message", onMsg); };
+  }, [idx, data, senseIdx]);
+
+  React.useEffect(() => {
+    if (idx === shownIdx) return;
+    setLeaving(true);
+    const t = setTimeout(() => { setShownIdx(idx); setLeaving(false); }, 950);
+    return () => clearTimeout(t);
+  }, [idx]);
+
+  const cur = STEPS[idx];
+  const shown = STEPS[shownIdx];
+  const last = idx === STEPS.length - 1;
+  const inGround = cur.key === "ground";
+
+  const frameClass = "frame is-practice";
+
+  const sIntro = shown.key === "intro";
+  const sEx    = shown.key === "ground";
+  const sDone  = shown.key === "done";
+
+  // The papercut settles from cool blue → soft warm as the member grounds through the five senses.
+  const warmth = sIntro ? 0 : sDone ? 0.85 : (senseIdx + 1) / 6;
+
+  const goNext = () => {
+    if (inGround && senseIdx < SENSE_LAST) setSenseIdx(senseIdx + 1);
+    else setIdx(idx + 1);
+  };
+  const goBack = () => { if (inGround && senseIdx > 0) setSenseIdx(senseIdx - 1); else if (idx > 0) setIdx(idx - 1); };
+
+  const nextLabel = idx === 0 ? "Begin" : (inGround && senseIdx < SENSE_LAST ? "Next" : "Continue");
+
+  const actions = last ? (
+    <>
+      <Button variant="outlined" onClick={() => { setIdx(0); setSenseIdx(0); setData({ entries: emptyEntries() }); }}>Run it again</Button>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Button variant="tonal" leadingIcon={<IcBell size={18} />}>Set a Reminder</Button>
+        <Button variant="filled" trailingIcon={<IcArrowR size={18} />}>Back to Stress Program</Button>
+      </div>
+    </>
+  ) : idx === 0 ? (
+    null
+  ) : (
+    <>
+      <Button variant="outlined" leadingIcon={<IcChevL size={18} />} onClick={goBack}>Go Back</Button>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <span className="actions-help">{inGround ? ("Sense " + (senseIdx + 1) + " of 5") : ("Step " + (idx + 1) + " of " + STEPS.length)}</span>
+        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={goNext}>{nextLabel}</Button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className={frameClass}>
+      <div className="practice-bg-layer">
+        <BreathBackground warmth={warmth} breath={null} />
+        <div className={"breath-fg" + (leaving ? " is-leaving" : "")}>
+          {sIntro && <IntroControls onStart={goNext} />}
+          {sEx && <PracticeControls stage={senseIdx} data={data} set={setData} />}
+          {sDone && <SummaryControls data={data} />}
+        </div>
+      </div>
+      <div className="screen">
+        <div className="app">
+          <HeaderNav />
+          <ContentSectionTemplate steps={STEPS} current={idx} actions={actions}
+            contentKey={shown.key} leaving={leaving} whole={true}>
+            {null}
+          </ContentSectionTemplate>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+
+  <script>
+    (function () {
+      var src = document.getElementById("app-src").textContent;
+      var code = Babel.transform(src, { presets: [["react", { runtime: "classic" }]] }).code;
+      window.eval(code);
+    })();
+  </script>
+</body>
+</html>
