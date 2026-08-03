@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CCBT · Solving the Problem — Sunrise prototype</title>
+  <title>CCBT · Three Good Things — Sunrise prototype</title>
   <style>
     /*
      * Material Sunrise — design tokens (inlined so this file is self-contained).
@@ -195,8 +195,6 @@
     .sr-input { height: 56px; padding: 0 16px; }
     .sr-textarea { resize: vertical; min-height: 88px; }
     .sr-input::placeholder, .sr-textarea::placeholder { color: var(--sys-on-surface-variant); }
-    /* Practice example prompts read as clearly optional, faint hint text (mirrors the Immersion variant) */
-    .ex-stage .sr-input::placeholder, .ex-stage .sr-textarea::placeholder { opacity: .55; }
     .sr-input:focus, .sr-textarea:focus { border-color: var(--sys-primary); box-shadow: 0 0 0 1px var(--sys-primary); }
 
     /* ---- Sunrise: Divider ---- */
@@ -284,9 +282,79 @@
     .mood-scale { display: flex; justify-content: space-between; width: 100%; font-size: var(--label-small-size); color: var(--sys-on-surface-variant); }
     .ns-note { font-size: 11px; color: var(--sys-on-surface-variant); font-style: italic; }
 
+    /* ---- Grounding (5-4-3-2-1) — tappable "notice" dots ---- */
+    .grd-wrap { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 8px 0 4px; }
+    .grd-dots { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .grd-dot { width: 60px; height: 60px; flex: none; border-radius: 50%; border: 2px solid var(--sys-outline-variant);
+      background: var(--sys-surface-container-lowest); color: transparent; cursor: pointer; display: inline-flex;
+      align-items: center; justify-content: center;
+      transition: background .18s, border-color .18s, color .18s, transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s; }
+    .grd-dot:hover { border-color: var(--sys-primary); background: var(--state-primary-08); }
+    .grd-dot.on { background: var(--sys-primary); border-color: var(--sys-primary); color: #fff; transform: scale(1.06);
+      box-shadow: 0 8px 20px rgba(7,92,186,.26); }
+    .grd-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 560px; margin: 0; }
+    .grd-count { font-size: var(--label-large-size); line-height: var(--label-large-lh); color: var(--sys-on-surface-variant);
+      min-height: 24px; transition: color .2s ease; }
+    .grd-count.done { color: var(--sys-success); font-weight: 500; }
+
     .pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--radius-full); background: var(--state-primary-08); color: var(--sys-primary); font-size: var(--label-small-size); font-weight: 600; }
     .medallion { width: 56px; height: 56px; border-radius: 50%; background: var(--state-primary-08); display: flex; align-items: center; justify-content: center; color: var(--sys-primary); }
     .medallion.solid { background: var(--sys-primary); color: var(--sys-on-primary); }
+
+    /* ============================================================
+       Three Good Things (Utility) — "moment of delight" ported from Immersion:
+       a motif picker under the progress bar + a celebration beat after each good thing.
+       ============================================================ */
+    /* motif picker — white-card styled */
+    .motif-picker { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:12px; }
+    .motif-picker .mp-label { font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--sys-on-surface-variant); }
+    .mp-seg { display:inline-flex; gap:3px; background:var(--sys-surface-container-high); border:1px solid var(--sys-outline-variant); border-radius:999px; padding:3px; }
+    .mp-btn { border:0; background:transparent; border-radius:999px; padding:5px 13px; font-family:inherit; font-size:12px; font-weight:600; color:var(--sys-on-surface-variant); cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s ease, color .15s ease; white-space:nowrap; }
+    .mp-btn:hover { color:var(--sys-on-surface); }
+    .mp-btn.on { background:var(--sys-primary); color:#fff; }
+
+    /* celebration layout (centered in the card body) */
+    .u-celeb { display:flex; flex-direction:column; align-items:center; text-align:center; gap:26px; padding:12px 0 6px; }
+    .u-celeb-caption { font-size:var(--headline-small-size); line-height:var(--headline-small-lh); font-weight:500; color:var(--sys-primary-container); animation: celFade .6s ease both .12s; }
+    .u-celeb-scene { position:relative; display:flex; align-items:center; justify-content:center; }
+    .u-celeb-echo { margin:0; max-width:520px; font-size:var(--body-large-size); line-height:var(--body-large-lh); color:var(--sys-on-surface-variant); font-style:italic; animation: celFade .6s ease both .28s; }
+    .u-celeb-cta { opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .5s ease, transform .5s ease; }
+    .u-celeb-cta.in { opacity:1; transform:none; pointer-events:auto; }
+    @keyframes celFade { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+    /* Done crest — the collected motif above the recap */
+    .u-done-crest { display:flex; align-items:center; justify-content:center; height:112px; }
+    .u-done-crest > * { transform:scale(.56); }
+
+    /* --- Stars --- */
+    .m-stars { position:relative; width:300px; height:150px; }
+    .m-star { position:absolute; transform:translate(-50%,-50%); }
+    .m-star svg { display:block; filter: drop-shadow(0 0 12px rgba(255,206,102,.95)); }
+    .m-star.pop { animation: starPop .85s cubic-bezier(.18,1.5,.4,1) both; }
+    .m-star.idle { animation: starTwk 2.8s ease-in-out infinite; }
+    @keyframes starPop { 0%{opacity:0; transform:translate(-50%,-50%) scale(0) rotate(-50deg);} 55%{opacity:1;} 100%{opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0);} }
+    @keyframes starTwk { 0%,100%{opacity:.85;} 50%{opacity:1; filter:drop-shadow(0 0 16px rgba(255,206,102,1));} }
+    .m-line { position:absolute; inset:0; overflow:visible; pointer-events:none; }
+    .m-line path { stroke:rgba(255,196,90,.55); stroke-width:1.5; fill:none; stroke-dasharray:4 5; animation: celFade 1s ease both .3s; }
+    .m-spark { position:absolute; width:6px; height:6px; border-radius:50%; background:rgba(255,224,150,.95); box-shadow:0 0 8px rgba(255,206,102,.9); }
+    .m-spark.go { animation: sparkFly .9s ease-out forwards .25s; }
+    @keyframes sparkFly { 0%{opacity:0; transform:translate(-50%,-50%) scale(1);} 15%{opacity:1;} 100%{opacity:0; transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2);} }
+
+    /* --- Rings (Apple Watch-style activity rings) --- */
+    .m-rings { position:relative; width:180px; height:180px; display:flex; align-items:center; justify-content:center; }
+    .m-rings svg { filter: drop-shadow(0 4px 16px rgba(0,0,0,.16)); }
+    .m-rings.idle { animation: ringsBreathe 3.6s ease-in-out infinite; }
+    @keyframes ringsBreathe { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.035);} }
+    .ring-fill { animation: ringFill 1.15s cubic-bezier(.32,.94,.36,1) both; }
+    @keyframes ringFill { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: 0; } }
+
+    /* --- Logo (ComPsych three-arc mark: fills bottom → middle → top) --- */
+    .cl-mark { position:relative; display:flex; align-items:center; justify-content:center; }
+    .cl-mark > svg { overflow:visible; filter: drop-shadow(0 4px 12px rgba(7,15,54,.22)); }
+    .cl-arc.cl-ghost path { fill: rgba(7,15,54,0.12); }
+    .cl-arc.cl-fill path  { fill: var(--sys-primary-container); }
+    .cl-arc.cl-wipe path  { transform-box: fill-box; transform-origin: 50% 100%; animation: clFill 1.05s cubic-bezier(.32,.94,.36,1) both; }
+    @keyframes clFill { from { transform: scaleY(0.06); opacity: .35; } to { transform: scaleY(1); opacity: 1; } }
+    .cl-mark.idle { animation: ringsBreathe 3.6s ease-in-out infinite; }
   </style>
 </head>
 <body>
@@ -340,6 +408,8 @@ const IcTarget = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="9"/><circle
 const IcHeart  = (p) => <Icon {...p} d={<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>} />;
 const IcFlag   = (p) => <Icon {...p} d={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></>} />;
 const IcSpark  = (p) => <Icon {...p} d={<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>} />;
+
+const IcAnchor = (p) => <Icon {...p} d={<><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></>} />;
 
 // ComPsych swoosh — real 3-arc mark exported from the GuidanceResources Figma
 // (breadcrumb Logo, Path 3382/3383/3384), composed via nested SVGs, filled primary-container.
@@ -450,7 +520,7 @@ function HeaderNav() {
           <span className="sep">/</span>
           <a href="#" onClick={e=>e.preventDefault()} className="crumb c-muted">Stress</a>
           <span className="sep">/</span>
-          <span className="crumb c-cur">Solving the Problem</span>
+          <span className="crumb c-cur">Three Good Things</span>
         </nav>
       </div>
       <div className="nav-right">
@@ -471,12 +541,13 @@ function HeaderNav() {
  * Progress + Title/Content + Actions (from the GuidanceConnect
  * Wizard Page/Form template).
  * ============================================================ */
-function ContentSectionTemplate({ steps, current, children, actions, whole }) {
+function ContentSectionTemplate({ steps, current, children, actions, whole, belowProgress }) {
   return (
     <div className="section-wrap">
       <div className="section-card">
         <div className="section-progress">
           <ProgressTracker steps={steps} current={current} />
+          {belowProgress}
         </div>
         <div className="section-body">
           <div className={"col" + (whole ? " col--whole" : "")}>{children}</div>
@@ -499,68 +570,62 @@ function Title({ eyebrow, title, children }) {
 }
 
 /* ============================================================
- * Module screens — "2. Solving the Problem"  (verbatim copy)
+ * Module screens — Self-Compassion Break (Neff: mindfulness →
+ * common humanity → self-kindness). A 2-minute pause to meet a
+ * hard, stressful moment with warmth instead of self-criticism.
  * ============================================================ */
 
-// Screen 1 — Orientation
-function Orientation() {
+// Screen 1 — Intro
+function Intro() {
   return (
     <>
-      <Title eyebrow="Stress Program · Module 2 of 5" title="Solving the Problem">
-        Some stress comes from a specific, solvable problem — a bill you haven't dealt with,
-        a conversation you've been avoiding, a schedule that doesn't work. When we're overwhelmed,
-        it's tempting to avoid these problems entirely, which usually makes the stress louder,
-        not quieter. This module walks you through a structured way to tackle them.
+      <Title eyebrow="In-Between Care · Gratitude" title="Three good things">
+        Stress narrows our attention to whatever's going wrong. This is a gentle counterweight: name
+        three good things from your day — big or small. Noticing them on purpose is what shifts the
+        balance, even on a hard day.
       </Title>
       <HeroCard
-        icon={<IcLightbulb size={32} />}
-        title="Turn one stressor into a clear next step"
-        subtitle="A guided, four-step exercise"
-        chip="About 6 min · Skill-building"
+        icon={<IcSpark size={32} />}
+        title="Name three good things"
+        subtitle="Big or small — they all count"
+        chip="About 2 min · Gratitude"
       />
     </>
   );
 }
 
-// Screen 2 — Psychoeducation
-function Psychoeducation() {
+// Screen 1b — Learn: why the practice matters, before naming anything.
+function Learn() {
+  const points = [
+    { icon: <IcInfo size={22} />,  k: "Stress narrows focus", copy: "Under stress, the mind fixates on what's wrong — the good stuff gets easy to miss." },
+    { icon: <IcSpark size={22} />, k: "Notice on purpose",    copy: "Naming a few good moments, deliberately, gently trains your attention to find more." },
+    { icon: <IcHeart size={22} />, k: "Small but proven",     copy: "A few good things a day is one of the simplest, best-studied ways to lift mood over time." },
+  ];
   return (
     <>
-      <Title eyebrow="Learn" title="How problem-solving actually works">
-        Effective problem-solving isn't about finding the perfect answer — it's about having a
-        workable process: naming the problem clearly, brainstorming options without judging them yet,
-        weighing the realistic ones, and picking one to try.
+      <Title eyebrow="Why it works" title="Why notice the good?">
+        It only takes a minute or two — but noticing good things on purpose does something real. Here's why it's
+        worth it.
       </Title>
-      <div>
-        <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>An example — how Devon worked through it</span>
-        <div className="ex-grid">
-          {[
-            { icon: <IcTarget size={20} />,  step: "Naming the problem",    copy: "A repair bill he couldn't afford — and the sleep he was losing over it." },
-            { icon: <IcBulb size={20} />,    step: "Brainstorming options", copy: "Call the shop, ask about a payment plan, check a community assistance program." },
-            { icon: <IcCompass size={20} />, step: "Weighing the options",  copy: "Which of these felt realistic to actually try this week?" },
-            { icon: <IcFlag size={20} />,    step: "Picking one to try",    copy: "He started with one call — and the wall became a short list." },
-          ].map((b, i) => (
-            <div className="ex-box" key={i}>
-              <div className="ex-top">
-                <span className="ex-chip">{b.icon}</span>
-                <span className="ex-info"><IcInfo size={18} /></span>
-              </div>
-              <div className="ex-text">
-                <span className="ex-sub">{b.step}</span>
-                <p className="ex-copy">{b.copy}</p>
-              </div>
+      <div className="optgrid">
+        {points.map((p, i) => (
+          <div className="optcard" key={i}>
+            <div className="top"><span className="chip">{p.icon}</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontWeight: 500, color: "var(--sys-on-surface)" }}>{p.k}</span>
+              <p className="otitle" style={{ margin: 0, color: "var(--sys-on-surface-variant)" }}>{p.copy}</p>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </>
   );
 }
 
-// Screen 3 — Core Exercise. Immersive sub-flow, one task at a time:
-// 0 Define → 1 Brainstorm → 2 Choose → 3 Review. Driven by the footer Continue/Go Back.
-function CoreExercise({ data, set, stage }) {
-  // Cross-dissolve: fade the current sub-step out, swap content while invisible, fade the next in.
+// Screen 2 — the three-step break. One step at a time (notice → not alone → be kind), driven by the
+// footer Continue / Go Back. Write steps take a gentle line (example shown as faint placeholder, never
+// required); the middle step is a choose-one reminder. Never gated — there's no wrong way to do this.
+function GroundWalk({ data, set, stage }) {
   const [shown, setShown] = useState(stage);
   const [visible, setVisible] = useState(true);
   React.useEffect(() => {
@@ -570,156 +635,59 @@ function CoreExercise({ data, set, stage }) {
     return () => clearTimeout(t);
   }, [stage]);
 
-  const setOpt = (i, v) => set({ ...data, options: data.options.map((o, k) => k === i ? v : o) });
-  const eyebrow = `Practice · ${shown + 1} of 2`;
-  // blank Define field stands in with its faint example, so the recap never reads empty
-  const effProblem = data.problem && data.problem.trim() ? data.problem : PROBLEM_EXAMPLE;
-
-  const stressorRecap = (
-    <Card muted>
-      <div className="ex-recap">
-        <span className="k">Your stressor</span>
-        <p className="sr-body-m" style={{ margin: 0 }}>{effProblem}</p>
-      </div>
-    </Card>
-  );
+  const s = SC_STEPS[shown];
+  const val = data[s.field];
 
   return (
     <div className={"ex-stage " + (visible ? "in" : "out")}>
-      {shown === 0 && (
-        <>
-          <Title eyebrow={eyebrow} title="Name the problem" />
-          <InputField
-            label="Pick one stressor you're facing right now."
-            multiline rows={3}
-            placeholder={PROBLEM_EXAMPLE}
-            value={data.problem}
-            onChange={e => set({ ...data, problem: e.target.value })}
-          />
-        </>
+      <Title eyebrow={s.kicker} title={s.title}>{s.hint}</Title>
+      {s.type === "write" ? (
+        <div className="grd-fields">
+          <textarea className="sr-textarea" rows={3} placeholder={s.ph}
+            value={val} onChange={e => set({ ...data, [s.field]: e.target.value })} />
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {s.options.map((o, i) => (
+            <SelectionCard key={i} selected={val === i} leadingIcon={<IcHeart size={20} />}
+              text={o} onClick={() => set({ ...data, [s.field]: val === i ? null : i })} />
+          ))}
+        </div>
       )}
-
-      {shown === 1 && (
-        <>
-          <Title eyebrow={eyebrow} title="Brainstorm three options" />
-          {stressorRecap}
-          <div className="sr-field">
-            <label className="sr-flabel">Now list 3 possible ways to approach it, even imperfect ones.</label>
-            <span className="sr-fhelp">Brainstorm freely — no judging yet.</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 4 }}>
-              {data.options.map((o, i) => (
-                <input key={i} className="sr-input" placeholder={OPTION_EXAMPLES[i]} value={o}
-                       onChange={e => setOpt(i, e.target.value)} />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
     </div>
   );
 }
 
-// Screen 4 — Reflection
-function Reflection({ data, set }) {
+// Screen 3 — Done: a warm sign-off that reflects the three steps back to the member.
+function Done({ data, motif }) {
+  const rows = [
+    { k: "Good thing #1", v: (data.one && data.one.trim()) ? data.one : SC_STEPS[0].ph.replace(/^e\.g\.\s*/, "") },
+    { k: "Good thing #2", v: (data.two && data.two.trim()) ? data.two : SC_STEPS[1].ph.replace(/^e\.g\.\s*/, "") },
+    { k: "Good thing #3", v: (data.three && data.three.trim()) ? data.three : SC_STEPS[2].ph.replace(/^e\.g\.\s*/, "") },
+  ];
   return (
     <>
-      <Title eyebrow="Reflect" title="A quick check-in">
-        How does it feel to have this written down instead of circling in your head?
-      </Title>
-      <NonSystem_MoodMeter value={data.mood} onChange={e => set({ ...data, mood: +e.target.value })} />
-      <InputField
-        label="Anything you want to add? (optional)"
-        multiline rows={3}
-        placeholder="A word or two is enough…"
-        value={data.reflection}
-        onChange={e => set({ ...data, reflection: e.target.value })}
-      />
-    </>
-  );
-}
-
-/* NonSystem_MoodMeter — playful mood check (no Sunrise slider component yet).
- * A face slides along a calming gradient; its expression + the word warm up as you move toward calm. */
-function NonSystem_MoodMeter({ value, onChange }) {
-  const t = (value - 1) / 9;
-  const lerp = (a, b) => Math.round(a + (b - a) * t);
-  const face = `rgb(${lerp(150, 255)}, ${lerp(164, 202)}, ${lerp(201, 78)})`; // cool → warm
-  const curve = (t - 0.5) * 20;                                               // mouth: frown → smile
-  const words = ["Still circling", "Still circling", "A bit tangled", "A bit tangled", "Settling",
-                 "Settling", "Getting clearer", "Getting clearer", "Much clearer", "Much clearer"];
-  return (
-    <div className="mood">
-      <div className="mood-word">{words[value - 1]}</div>
-      <div className="mood-slider">
-        <div className="mood-track" />
-        <div className="mood-thumb" style={{ left: `calc(28px + ${t} * (100% - 56px))` }}>
-          <span className="mood-glow" style={{ background: `radial-gradient(circle, ${face}66 0%, transparent 70%)` }} />
-          <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">
-            <circle cx="24" cy="24" r="22" fill={face} />
-            <circle cx="17.5" cy="20" r="2.6" fill="#37342f" />
-            <circle cx="30.5" cy="20" r="2.6" fill="#37342f" />
-            <path d={`M16 30 Q24 ${30 + curve} 32 30`} stroke="#37342f" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-          </svg>
-        </div>
-        <input type="range" min="1" max="10" value={value} onChange={onChange} className="mood-range" aria-label="Where are you right now?" />
-      </div>
-      <div className="mood-scale"><span>Still circling</span><span>Much clearer</span></div>
-      <div className="ns-note">NonSystem_MoodMeter — pending a published Sunrise mood/slider component.</div>
-    </div>
-  );
-}
-
-// Screen 5 — Homework
-function Homework({ data, set }) {
-  const effProblem = data.problem && data.problem.trim() ? data.problem : PROBLEM_EXAMPLE;
-  return (
-    <>
-      <Title eyebrow="Homework" title="One small action">
-        Take one small action on your chosen option before the next module — even a first phone
-        call or a five-minute step counts.
-      </Title>
-      <Card muted>
-        <div className="ex-recap">
-          <span className="k">Your stressor</span>
-          <p className="sr-body-m" style={{ margin: 0 }}>{effProblem}</p>
-        </div>
-      </Card>
-      <div className="opt-cards">
-        {data.options.map((o, i) => (
-          <button key={i}
-            className={"opt-card" + (data.chosen === i ? " sel" : "")}
-            onClick={() => set({ ...data, chosen: i })}>
-            <span className="opt-num">{i + 1}</span>
-            <span className="opt-copy">{o && o.trim() ? o : `Option ${i + 1}`}</span>
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
-
-// Screen 6 — Summary
-function Summary({ data }) {
-  const chosen = data.chosen != null ? data.options[data.chosen] : "";
-  const effProblem = data.problem && data.problem.trim() ? data.problem : PROBLEM_EXAMPLE;
-  return (
-    <>
-      <div className="medallion solid"><IcCheck size={30} /></div>
+      <div className="u-done-crest"><MotifScene motif={motif || "stars"} count={3} isNew={false} /></div>
       <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)" }}>
-        You don't need the perfect solution to feel less stressed — you need a next step.
+        Three good things — noticed on purpose.
       </h1>
+      <Card muted>
+        <p className="sr-body-m" style={{ margin: 0 }}>
+          Savoring the good, even briefly, trains your attention to find more of it. A few good things a
+          day is one of the simplest, best-evidenced ways to lighten a stressful stretch.
+        </p>
+      </Card>
       <Card>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The problem</span>
-            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{effProblem}</p>
-          </div>
-          <Divider />
-          <div>
-            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>Your next step</span>
-            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{chosen && chosen.trim() ? chosen : "—"}</p>
-          </div>
+          {rows.map((r, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <Divider />}
+              <div>
+                <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>{r.k}</span>
+                <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{r.v}</p>
+              </div>
+            </React.Fragment>
+          ))}
         </div>
       </Card>
     </>
@@ -730,51 +698,200 @@ function Summary({ data }) {
  * App — module player shell + prototype controls
  * ============================================================ */
 const STEPS = [
-  { key: "orientation",     label: "Intro",     slug: "orientation" },
-  { key: "psychoeducation", label: "Learn",     slug: "learn" },
-  { key: "exercise",        label: "Practice",  slug: "practice" },
-  { key: "reflection",      label: "Reflect",   slug: "reflect" },
-  { key: "homework",        label: "Homework",  slug: "homework" },
-  { key: "summary",         label: "Done",      slug: "summary" },
+  { key: "intro",  label: "Start", slug: "intro" },
+  { key: "learn",  label: "Learn", slug: "learn" },
+  { key: "ground", label: "Name",  slug: "name" },
+  { key: "done",   label: "Done",  slug: "done" },
 ];
 
-const EX_LAST = 1; // exercise sub-stages: 0 Define, 1 Brainstorm (choosing moved to Homework)
+const SC_LAST = 2; // good-things sub-steps: one(0) → two(1) → three(2)
 
-// Example problem + options shown as faint placeholders (never stored as full-opacity input);
-// effProblem stands in for display downstream if the field is left blank. Mirrors the Immersion variant.
-const PROBLEM_EXAMPLE = "The overdue car repair bill I can't afford right now.";
-const OPTION_EXAMPLES = [
-  "Call the shop and ask for an itemized quote",
-  "Ask about a payment plan",
-  "Check one community assistance program",
+const SC_STEPS = [
+  { field: "one", type: "write", kicker: "Good things · 1 of 3", title: "What's one good thing today?",
+    hint: "Anything that went right or made you smile — big or small.",
+    ph: "e.g. Coffee on the porch before the house woke up." },
+  { field: "two", type: "write", kicker: "Good things · 2 of 3", title: "What's another good thing?",
+    hint: "A kind word, a finished task, a good song — small counts.",
+    ph: "e.g. A coworker covered a call so I could take a breather." },
+  { field: "three", type: "write", kicker: "Good things · 3 of 3", title: "And one more good thing?",
+    hint: "However tiny. Naming it on purpose is the whole practice.",
+    ph: "e.g. I finally replied to that email I'd been dreading." },
 ];
+
+// initial data: the three good things
+function emptyEntries() {
+  return { one: "", two: "", three: "" };
+}
+
+/* ============================================================
+ * Moment-of-delight motifs (ported from the Immersion look).
+ * ============================================================ */
+const MOTIFS = [
+  { id: "stars", label: "Stars", emoji: "✨" },
+  { id: "rings", label: "Rings", emoji: "◎" },
+  { id: "logo",  label: "Logo",  emoji: "◠" },
+];
+const CEL_CAPTIONS = ["", "Great job naming your first good thing.", "That's two — lovely.", "Three. Beautifully done."];
+const CEL_CTAS = ["", "Let's name another", "Let's name one more"];
+const STAR_POS = [ { left: "24%", top: "60%" }, { left: "50%", top: "30%" }, { left: "76%", top: "58%" } ];
+const CELEB_MS = 1650;
+const CELEB_DONE_MS = 1900;
+
+function StarShape({ size = 42 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <radialGradient id="starg" cx="40%" cy="34%" r="70%">
+          <stop offset="0%" stopColor="#fff6d6" />
+          <stop offset="60%" stopColor="#ffd166" />
+          <stop offset="100%" stopColor="#f4a83c" />
+        </radialGradient>
+      </defs>
+      <path d="M12 2l2.6 6.3L21 9l-5 4.6L17.5 21 12 17.3 6.5 21 8 13.6 3 9l6.4-.7z" fill="url(#starg)" />
+    </svg>
+  );
+}
+
+// One scene for both the per-entry beat (isNew: animate the newest item) and the Done crest (idle).
+function MotifScene({ motif, count, isNew }) {
+  if (motif === "logo") {
+    const ARCS = [
+      { x: "2.264", y: "12.09", w: "18.527", h: "4.796",  vb: "0 0 19.2818 4.82726", d: "M9.6409 0.00415971C7.74432 -0.0466691 5.86536 0.369028 4.17945 1.21245C2.49354 2.05587 1.05565 3.29951 0 4.82726H19.2818C18.2262 3.29951 16.7883 2.05587 15.1023 1.21245C13.4164 0.369028 11.5375 -0.0466691 9.6409 0.00415971Z" },
+      { x: "1.582", y: "6.319", w: "19.889", h: "9.998",  vb: "0 0 20.6998 10.066",  d: "M10.3487 0.00169587C7.65891 -0.0460333 5.05927 0.941494 3.11947 2.74788C1.17967 4.55426 0.0579042 7.03217 0 9.63861C0 9.78184 0.00399474 9.92429 0.0111847 10.066C0.573608 9.2118 1.26546 8.44452 2.06351 7.78989C4.38906 5.91715 7.32684 4.90826 10.3503 4.94402C13.3738 4.90812 16.3116 5.91703 18.6371 7.78989C19.4348 8.44484 20.1266 9.21207 20.6894 10.066C20.6958 9.92429 20.6998 9.78184 20.6998 9.63861C20.6419 7.03176 19.5198 4.55349 17.5795 2.74704C15.6392 0.940594 13.0389 -0.0466553 10.3487 0.00169587Z" },
+      { x: "0", y: "0", w: "23.06", h: "15.584", vb: "0 0 24 15.6895", d: "M11.9972 5.48972C14.8709 5.44427 17.6505 6.48269 19.7491 8.38578C21.8476 10.2889 23.101 12.9077 23.2447 15.6895C23.921 13.9306 24.1479 12.0393 23.9061 10.177C23.6643 8.31474 22.9609 6.53685 21.856 4.99523C20.7511 3.4536 19.2776 2.19406 17.5613 1.3242C15.845 0.454337 13.9369 0 12 0C10.0631 0 8.15503 0.454337 6.43872 1.3242C4.7224 2.19406 3.24886 3.4536 2.14398 4.99523C1.0391 6.53685 0.335709 8.31474 0.0938929 10.177C-0.147923 12.0393 0.0790229 13.9306 0.755345 15.6895C0.899154 12.9088 2.15186 10.291 4.2492 8.38819C6.34655 6.48541 9.12455 5.44646 11.9972 5.4905V5.48972Z" },
+    ];
+    return (
+      <div className={"cl-mark" + (isNew ? "" : " idle")}>
+        <svg width="220" viewBox="0 0 23.06 16.886" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="clgrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2f8ae8" /><stop offset="100%" stopColor="#075cba" />
+            </linearGradient>
+          </defs>
+          {ARCS.map((a, i) => (
+            <svg key={"g" + i} x={a.x} y={a.y} width={a.w} height={a.h} viewBox={a.vb} className="cl-arc cl-ghost"><path d={a.d} /></svg>
+          ))}
+          {ARCS.map((a, i) => i < count ? (
+            <svg key={"f" + i} x={a.x} y={a.y} width={a.w} height={a.h} viewBox={a.vb}
+              className={"cl-arc cl-fill" + (isNew && i === count - 1 ? " cl-wipe" : "")}><path d={a.d} /></svg>
+          ) : null)}
+        </svg>
+      </div>
+    );
+  }
+  if (motif === "rings") {
+    const RINGS = [
+      { r: 62, a: "#F31260", b: "#FF7A3D" },
+      { r: 45, a: "#34C759", b: "#A8F24A" },
+      { r: 28, a: "#0AB4E6", b: "#19E6CE" },
+    ];
+    return (
+      <div className={"m-rings" + (isNew ? "" : " idle")}>
+        <svg viewBox="0 0 160 160" width="180" height="180" aria-hidden="true">
+          <defs>
+            {RINGS.map((ring, i) => (
+              <linearGradient key={i} id={"rg" + i} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={ring.a} /><stop offset="100%" stopColor={ring.b} />
+              </linearGradient>
+            ))}
+          </defs>
+          <g transform="rotate(-90 80 80)">
+            {RINGS.map((ring, i) => {
+              const C = 2 * Math.PI * ring.r;
+              const done = i < count;
+              const animating = isNew && i === count - 1;
+              return (
+                <g key={i}>
+                  <circle cx="80" cy="80" r={ring.r} fill="none" stroke={ring.a} strokeOpacity="0.16" strokeWidth="13" />
+                  <circle cx="80" cy="80" r={ring.r} fill="none" stroke={"url(#rg" + i + ")"} strokeWidth="13"
+                    strokeLinecap="round" strokeDasharray={C} strokeDashoffset={done ? 0 : C}
+                    className={animating ? "ring-fill" : ""} style={animating ? { "--c": C } : null} />
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+      </div>
+    );
+  }
+  // stars (default)
+  const pts = STAR_POS.slice(0, count);
+  const newest = STAR_POS[count - 1];
+  return (
+    <div className="m-stars">
+      {count >= 2 && (
+        <svg className="m-line" viewBox="0 0 300 150" preserveAspectRatio="none">
+          <path d={pts.map((p, i) => (i ? "L" : "M") + (parseFloat(p.left) / 100 * 300) + " " + (parseFloat(p.top) / 100 * 150)).join(" ")} />
+        </svg>
+      )}
+      {pts.map((p, i) => (
+        <span key={i} className={"m-star " + (isNew && i === count - 1 ? "pop" : "idle")}
+          style={{ left: p.left, top: p.top, animationDelay: (i * 0.1) + "s" }}>
+          <StarShape size={isNew && i === count - 1 ? 48 : 42} />
+        </span>
+      ))}
+      {isNew && Array.from({ length: 6 }).map((_, i) => {
+        const ang = (i / 6) * Math.PI * 2;
+        return <span key={"sp" + i} className="m-spark go"
+          style={{ left: newest.left, top: newest.top, "--dx": Math.cos(ang) * 46 + "px", "--dy": Math.sin(ang) * 46 + "px" }} />;
+      })}
+    </div>
+  );
+}
+
+// The between-screens beat: caption + growing scene + echoed words + (for #1/#2) a Continue button.
+function Celebration({ motif, count, text, onContinue }) {
+  const [showBtn, setShowBtn] = useState(false);
+  React.useEffect(() => {
+    if (!onContinue) return;
+    const t = setTimeout(() => setShowBtn(true), 1250);
+    return () => clearTimeout(t);
+  }, [onContinue]);
+  return (
+    <div className="u-celeb">
+      <span className="u-celeb-caption">{CEL_CAPTIONS[count] || "Noticed."}</span>
+      <div className="u-celeb-scene"><MotifScene motif={motif} count={count} isNew={true} /></div>
+      <p className="u-celeb-echo">{text && text.trim() ? "“" + text.trim() + "”" : "Noticed — that counts too."}</p>
+      {onContinue && (
+        <div className={"u-celeb-cta" + (showBtn ? " in" : "")}>
+          <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={onContinue}>{CEL_CTAS[count] || "Let's name another"}</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MotifPicker({ value, onChange }) {
+  return (
+    <div className="motif-picker">
+      <span className="mp-label">Delight style</span>
+      <div className="mp-seg">
+        {MOTIFS.map(m => (
+          <button key={m.id} className={"mp-btn" + (value === m.id ? " on" : "")} onClick={() => onChange(m.id)}>
+            <span aria-hidden="true">{m.emoji}</span>{m.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [idx, setIdx] = useState(0);
-  const [exStage, setExStage] = useState(0);
-  const [data, setData] = useState({
-    problem: "",   // blank so the example shows as a faint placeholder; auto-fills for display on Continue
-    options: ["", "", ""],
-    chosen: null,
-    mood: 6,
-    reflection: "",
-  });
+  const [senseIdx, setSenseIdx] = useState(0);
+  const [data, setData] = useState(emptyEntries());
+  const [motif, setMotif] = useState("stars");
+  const [celeb, setCeleb] = useState(null); // { count, text, toDone } while a delight beat plays
 
-  // Shell bridge: lets the parent explorer read this module's step + inputs and hydrate the sibling
-  // "look" (Utility ↔ Immersion) without reloading. The full data object transfers (content is the
-  // point of this module), plus the Practice sub-stage via _ex. Symmetric with the Immersion variant.
+  // Shell bridge: read this module's step + progress and hydrate the sibling look (Utility ↔ Immersion)
+  // without reloading. The two written lines + chosen reminder transfer, plus the current sub-step via _ex.
   React.useEffect(() => {
     function onMsg(e) {
       var m = e && e.data;
       if (!m || typeof m !== "object") return;
       if (m.type === "reset:getState") {
         var w = e.source || window.parent;
-        if (w) w.postMessage({ type: "reset:state", idx: idx, data: {
-          // report the example when blank so the sibling "look" shows the same stand-in (it treats an
-          // incoming value equal to PROBLEM_EXAMPLE as "not yet typed" and keeps it a faint placeholder)
-          problem: data.problem.trim() ? data.problem : PROBLEM_EXAMPLE, options: data.options, chosen: data.chosen,
-          mood: data.mood, reflection: data.reflection, _ex: exStage,
-        } }, "*");
+        if (w) w.postMessage({ type: "reset:state", idx: idx, data: { one: data.one, two: data.two, three: data.three, _ex: senseIdx } }, "*");
       } else if (m.type === "reset:next") {
         setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); });
       } else if (m.type === "reset:prev") {
@@ -783,54 +900,54 @@ function App() {
         if (typeof m.idx === "number") setIdx(m.idx);
         if (m.data && typeof m.data === "object") {
           var inc = Object.assign({}, m.data);
-          if (typeof inc._ex === "number") setExStage(inc._ex);
+          if (typeof inc._ex === "number") setSenseIdx(inc._ex);
           delete inc._ex;
-          // an incoming problem equal to the shared example seed is "not yet typed" — keep it a
-          // faint placeholder rather than showing it as full-opacity entered text
-          if (inc.problem === PROBLEM_EXAMPLE) inc.problem = "";
           setData(function (d) { return Object.assign({}, d, inc); });
         }
       }
     }
     window.addEventListener("message", onMsg);
     return function () { window.removeEventListener("message", onMsg); };
-  }, [idx, data, exStage]);
+  }, [idx, data, senseIdx]);
 
   const cur = STEPS[idx];
   const last = idx === STEPS.length - 1;
-  const inEx = cur.key === "exercise";
+  const inGround = cur.key === "ground";
 
-  // Practice is freely advanceable — a blank Define/Brainstorm field stands in with its faint example
-  // (Define via effProblem for display; Brainstorm options auto-filled on Continue).
-  const canAdvance = inEx ? true : (cur.key === "homework" ? data.chosen != null : true);
+  const advanceFromCeleb = () => { setCeleb(null); setSenseIdx(function (s) { return s + 1; }); };
 
   const goNext = () => {
-    if (inEx && exStage < EX_LAST) {
-      setExStage(exStage + 1);
-    } else {
-      // Leaving Brainstorm → fill any blank option with its example placeholder.
-      if (inEx && exStage === 1) {
-        setData({ ...data, options: data.options.map((o, i) => (o && o.trim()) ? o : OPTION_EXAMPLES[i]) });
+    if (celeb) return;
+    if (inGround) {
+      const text = data[SC_STEPS[senseIdx].field];
+      const count = senseIdx + 1;
+      const toDone = senseIdx >= SC_LAST;
+      setCeleb({ count: count, text: text, toDone: toDone });
+      if (toDone) {
+        // the final fill holds a beat, then auto-advances to the recap
+        setTimeout(function () { setCeleb(null); setIdx(function (i) { return i + 1; }); }, CELEB_DONE_MS);
       }
+      // #1 and #2 wait for the "Let's name another / one more" button (advanceFromCeleb)
+    } else {
       setIdx(idx + 1);
     }
   };
-  const goBack = () => { if (inEx && exStage > 0) setExStage(exStage - 1); else setIdx(idx - 1); };
+  const goBack = () => { if (celeb) return; if (inGround && senseIdx > 0) setSenseIdx(senseIdx - 1); else if (idx > 0) setIdx(idx - 1); };
 
-  const nextLabel = idx === 0 ? "Let's Get Started" : "Continue";
+  const nextLabel = idx === 0 ? "Begin" : (inGround && senseIdx < SC_LAST ? "Next" : "Continue");
 
   const screen = {
-    orientation:     <Orientation />,
-    psychoeducation: <Psychoeducation />,
-    exercise:        <CoreExercise data={data} set={setData} stage={exStage} />,
-    reflection:      <Reflection data={data} set={setData} />,
-    homework:        <Homework data={data} set={setData} />,
-    summary:         <Summary data={data} />,
+    intro:  <Intro />,
+    learn:  <Learn />,
+    ground: celeb
+      ? <Celebration motif={motif} count={celeb.count} text={celeb.text} onContinue={celeb.toDone ? null : advanceFromCeleb} />
+      : <GroundWalk data={data} set={setData} stage={senseIdx} />,
+    done:   <Done data={data} motif={motif} />,
   }[cur.key];
 
-  const actions = last ? (
+  const actions = celeb ? null : last ? (
     <>
-      <Button variant="outlined" onClick={() => { setIdx(0); setExStage(0); }}>Review this module</Button>
+      <Button variant="outlined" onClick={() => { setIdx(0); setSenseIdx(0); setData(emptyEntries()); }}>Run it again</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Button variant="tonal" leadingIcon={<IcBell size={18} />}>Set a Reminder</Button>
         <Button variant="filled" trailingIcon={<IcArrowR size={18} />}>Back to Stress Program</Button>
@@ -840,10 +957,8 @@ function App() {
     <>
       <Button variant="outlined" leadingIcon={<IcChevL size={18} />} disabled={idx === 0} onClick={goBack}>Go Back</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <span className="actions-help">Step {idx + 1} of {STEPS.length}</span>
-        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} disabled={!canAdvance} onClick={goNext}>
-          {nextLabel}
-        </Button>
+        <span className="actions-help">{inGround ? ("Step " + (senseIdx + 1) + " of 3") : ("Step " + (idx + 1) + " of " + STEPS.length)}</span>
+        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={goNext}>{nextLabel}</Button>
       </div>
     </>
   );
@@ -854,7 +969,8 @@ function App() {
         <div className="app">
           <HeaderNav />
           <ContentSectionTemplate steps={STEPS} current={idx} actions={actions}
-            whole={cur.key === "orientation" || cur.key === "psychoeducation" || cur.key === "summary"}>
+            whole={cur.key === "intro" || cur.key === "done" || !!celeb}
+            belowProgress={cur.key !== "intro" ? <MotifPicker value={motif} onChange={setMotif} /> : null}>
             {screen}
           </ContentSectionTemplate>
         </div>
