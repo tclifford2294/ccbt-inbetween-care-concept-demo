@@ -16,8 +16,9 @@ Built on **Material Sunrise** (ComPsych's in-house design system, based on Mater
   toggle. It hosts each module in an iframe and supports **seamless switching** between the two
   looks mid-flow via a `postMessage` state bridge (step index + user inputs transfer across).
 - `tokens.css` mirrors the Sunrise design tokens used inline across all files.
-- `spec/` holds the two clinical source documents the module set was derived from — useful for
-  justifying the rotation logic and each module's clinical intent in a run-of-show.
+- The module set was derived from two internal clinical source documents (an In-Between Care
+  outreach rotation and a Transdiagnostic Intervention Library). Those are not published in this
+  public repo; ask the project owner if you need them for clinical rationale.
 
 ## The screen flow, in short
 Most modules follow: **Intro (Start) → Learn → the activity step(s) → Done (recap)**.
@@ -48,4 +49,3 @@ Static files, no build step. From this folder: `python3 serve.py` (or any static
 - Screen names, step labels, and on-screen copy: the `STEPS`/`SC_STEPS`/`SENSES`/`RESOURCES`
   arrays and the `*Controls` / screen components inside each file's `app-src` script block.
 - The demo's headline feature is **seamless Utility ↔ Immersion switching** (see `index.html`).
-- `spec/` explains *why* each module exists and how they rotate week to week.
