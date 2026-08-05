@@ -990,5 +990,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
       window.eval(code);
     })();
   </script>
+
+  <!-- PILOT: Konpo "Notes" — Figma-style pinned commenting for clinical feedback.
+       One script tag, Shadow-DOM isolated (won't touch the Sunrise styles). Comments are
+       grouped under the data-project below. Remove this block to disable feedback. -->
+  <script src="https://konpo-notes.vercel.app/embed.js" data-project="ccbt-stress"></script>
 </body>
 </html>

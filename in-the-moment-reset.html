@@ -245,6 +245,14 @@
     .ex-box .ex-text { display: flex; flex-direction: column; gap: 4px; }
     .ex-box .ex-sub { font-size: var(--label-small-size); line-height: var(--label-small-lh); font-weight: var(--label-small-weight); color: var(--sys-on-surface-variant); }
     .ex-box .ex-copy { margin: 0; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); }
+    /* Learn "pattern" cards — big 4 / 6 / repeat numerals (mirrors the Immersion variant, on light surface) */
+    .learn-box { justify-content: flex-start; gap: 8px; min-height: 0; }
+    .learn-num { display: flex; align-items: center; height: 32px; font-size: 32px; line-height: 1; font-weight: 500;
+      letter-spacing: -0.02em; color: var(--sys-primary); font-variant-numeric: tabular-nums; }
+    .learn-num svg { color: var(--sys-primary); }
+    .learn-k { font-size: var(--label-medium-size); line-height: var(--label-medium-lh); font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--sys-on-surface-variant); }
+    .learn-copy { margin: 6px 0 0; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); }
 
     /* ---- NonSystem breathing player ----
      * The breathing lives in a PERSISTENT full-screen layer that sits behind the app.
@@ -282,7 +290,8 @@
     .breath-ui.is-in, .breath-ui.is-out { color: var(--sys-on-primary); }
     .breath-ui.is-paused, .breath-ui.is-ready, .breath-ui.is-done { color: var(--sys-primary-container); }
 
-    .b2-top { padding-top: var(--pad-4); }
+    /* lower the ambience pill so it clears the progress tracker on typical viewports */
+    .b2-top { padding-top: 48px; }
     .b2-ambience { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px;
       border-radius: var(--radius-full); border: 1px solid transparent; background: rgba(255,255,255,0.16);
       color: inherit; font-family: inherit; font-size: var(--label-medium-size); font-weight: 500; cursor: pointer; }
@@ -319,6 +328,15 @@
     .frame.is-practice .section-actions { pointer-events: auto; }
     /* nav transparent so the breathing extends behind it */
     .frame.is-practice .navbar { background: transparent; border-bottom-color: transparent; }
+
+    /* Play pressed → the whole app frame (nav, progress bar, footer) fades away so only the breathing
+       remains; Pause brings it all back. The breathing layer/visuals are untouched. */
+    .frame.is-practice .navbar,
+    .frame.is-practice .section-progress,
+    .frame.is-practice .section-actions { transition: opacity .55s ease, background-color .5s ease, border-color .5s ease; }
+    .frame.is-running .navbar,
+    .frame.is-running .section-progress,
+    .frame.is-running .section-actions { opacity: 0; pointer-events: none; }
 
     /* smooth chrome recolor when the breathing goes light↔dark */
     .navbar, .navbar .nav-item, .crumbs a, .crumbs .c-cur, .crumbs .c-muted, .crumbs .sep,
@@ -614,19 +632,14 @@ function Psychoeducation() {
         <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The pattern — in 4, out 6</span>
         <div className="ex-grid ex-grid--3">
           {[
-            { icon: <IcArrowDown size={20} />, step: "Step 1 · Inhale",  copy: "Breathe in gently through your nose for a count of 4." },
-            { icon: <IcArrowUp size={20} />,   step: "Step 2 · Exhale",  copy: "Breathe out slowly through your mouth for a count of 6." },
-            { icon: <IcRepeat size={20} />,    step: "Step 3 · Repeat",  copy: "Keep going for about a minute — roughly six breaths a minute." },
+            { num: "4", k: "Inhale", copy: "Gently through your nose." },
+            { num: "6", k: "Exhale", copy: "Slowly through your mouth." },
+            { icon: <IcRepeat size={32} />, k: "Repeat", copy: "Around six breaths — about a minute." },
           ].map((b, i) => (
-            <div className="ex-box" key={i}>
-              <div className="ex-top">
-                <span className="ex-chip">{b.icon}</span>
-                <span className="ex-info"><IcInfo size={18} /></span>
-              </div>
-              <div className="ex-text">
-                <span className="ex-sub">{b.step}</span>
-                <p className="ex-copy">{b.copy}</p>
-              </div>
+            <div className="ex-box learn-box" key={i}>
+              <span className="learn-num">{b.num != null ? b.num : b.icon}</span>
+              <span className="learn-k">{b.k}</span>
+              <p className="learn-copy">{b.copy}</p>
             </div>
           ))}
         </div>
@@ -643,7 +656,7 @@ const AMBIENCE = ["Chirping Birds", "Ocean Waves", "Gentle Rain", "Silence"];
 // Shared breathing state — so the App can render the BACKGROUND (color + ripple) and
 // the FOREGROUND controls in separate DOM slots while sharing one paced timer.
 function useBreath(active) {
-  const IN = 4, OUT = 6, CYCLE = IN + OUT, TARGET = 120; // 2-minute session
+  const IN = 4, OUT = 6, CYCLE = IN + OUT, TARGET = 60; // 1-minute session (matches the "about a minute" copy)
   const [running, setRunning] = useState(false);
   const [tick, setTick] = useState(0);
   const [ambience, setAmbience] = useState(0);
@@ -883,7 +896,7 @@ function App() {
   const breath = useBreath(inEx);
   // Practice fills the whole screen with the breathing behind a persistent UI frame;
   // `is-dark` flips the chrome to light glass while the breathing is actively running (dark).
-  const frameClass = "frame" + (inEx ? " is-practice" : "") + (inEx && breath.running ? " is-dark" : "");
+  const frameClass = "frame" + (inEx ? " is-practice" : "") + (inEx && breath.running ? " is-dark is-running" : "");
 
   // Homework requires a chosen cue; every other step is freely advanceable.
   const canAdvance = cur.key === "homework" ? data.cue != null : true;
@@ -955,5 +968,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
       window.eval(code);
     })();
   </script>
+
+  <!-- Konpo "Notes" — Figma-style pinned commenting for clinical feedback (Shadow-DOM isolated).
+       Shared project so all module feedback lands in one place; Konpo scopes pins per page. Remove to disable. -->
+  <script src="https://konpo-notes.vercel.app/embed.js" data-project="ccbt-stress"></script>
 </body>
 </html>
