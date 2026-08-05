@@ -280,8 +280,8 @@
 
     /* foreground controls — inset so they clear the nav (top) and footer/stepnav (bottom) */
     /* controls always read dark on the light papercut background */
-    .breath-ui { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center;
-      text-align: center; padding: 200px 24px 150px; color: var(--sys-primary-container); }
+    .breath-ui { position: relative; z-index: 1; flex: 1 0 auto; width: 100%; display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 40px 24px 150px; color: var(--sys-primary-container); }
     /* IN: the incoming section fades in and slides UP into place — same 0.6s speed and easing as the
        dissolve-out below, so the two read as one consistent, calming motion. */
     .frame.is-practice .breath-ui { animation: breathUiIn .6s cubic-bezier(.4,0,.2,1) both; }
@@ -291,13 +291,15 @@
        papercut (which never moves) — the exact mirror of the in. The transition is declared only on
        the leaving state, so when it's removed the wrapper snaps back and breathUiIn cleanly owns the
        entrance (no double motion). Both directions share 0.6s + the same easing. */
-    .breath-fg { position: absolute; inset: 0; z-index: 1; }
+    .breath-fg { position: absolute; inset: 0; z-index: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    /* the step progress lives inside the scroll flow: sits below the nav at rest and scrolls up with the content */
+    .im-progress { flex: none; width: 100%; padding: 84px 24px 0; }
     .breath-fg.is-leaving { opacity: 0; transform: translateY(18px);
       transition: opacity .6s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.4,0,.2,1); }
 
     /* generous, consistent vertical rhythm between the icon/head, title and the component below —
        shared across Practice, Reflect, Homework and Done so they all breathe the same way */
-    .b2-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 44px; padding: 0 24px; }
+    .b2-center { flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 44px; padding: 0 24px; }
     /* DS Emphasized / Headline / Headline Medium — 40/48, Google Sans Medium (500), tracking 0 */
     .b2-phase { font-size: var(--headline-medium-size); line-height: var(--headline-medium-lh); font-weight: 500; letter-spacing: 0; text-shadow: 0 2px 22px rgba(255,255,255,0.5); }
     /* shared supporting lede beneath the hero title — one editorial voice across every step */
@@ -337,9 +339,14 @@
     .frame.is-practice .navbar,
     .frame.is-practice .section-progress,
     .frame.is-practice .section-actions { pointer-events: auto; }
-    /* nav transparent so the breathing extends behind it */
-    .frame.is-practice .navbar { background: transparent; border-bottom-color: transparent; }
-    /* the footer + prototype step-nav go transparent too, so the whole screen is papercut */
+    /* nav is transparent on the papercut at rest; ONLY on scroll does it gain a solid white background,
+       so content sliding up behind the sticky menu doesn't visibly overlap it. Otherwise unchanged. */
+    .frame.is-practice .navbar { background: transparent; border-bottom-color: transparent;
+      transition: background-color .2s ease, border-color .2s ease; }
+    .frame.is-practice.is-scrolled .navbar { background: var(--sys-surface-container-lowest); border-bottom-color: var(--sys-outline); }
+    /* the step progress now lives inside the scrolling content (.im-progress), so hide the fixed chrome copy */
+    .frame.is-practice .section-progress { display: none; }
+    /* the footer + prototype step-nav go transparent so the rest of the screen is papercut */
     .frame.is-practice .section-actions { border-top-color: transparent; }
     .frame.is-practice .stepnav { background: transparent; border-top-color: transparent; }
 
@@ -1780,7 +1787,19 @@ function App() {
   const inEx = cur.key === "exercise";
 
   // Every step shares the immersive full-screen papercut frame — one continuous world (no dark field).
-  const frameClass = "frame is-practice";
+  // `is-scrolled` is toggled only while a step's content is actually scrolled, which flips the nav to a
+  // solid white background so content passing behind it doesn't overlap. At rest it stays transparent.
+  const [scrolled, setScrolled] = useState(false);
+  React.useEffect(() => {
+    function onScroll(e) {
+      var t = e.target;
+      if (t && t.classList && t.classList.contains("breath-fg")) setScrolled(t.scrollTop > 8);
+    }
+    document.addEventListener("scroll", onScroll, true); // capture — scroll events don't bubble
+    return function () { document.removeEventListener("scroll", onScroll, true); };
+  }, []);
+  React.useEffect(() => { setScrolled(false); }, [idx]); // reset when moving to a new step (scroll resets to top)
+  const frameClass = "frame is-practice" + (scrolled ? " is-scrolled" : "");
 
   // Rendered section follows `shown`, which lags `idx` during the dissolve.
   const sIntro   = shown.key === "orientation";
@@ -1858,6 +1877,7 @@ function App() {
         {sEx && <SolveAmbience stage={exStage} data={data} />}
         {/* the foreground section dissolves out/in over the persistent papercut on step change */}
         <div className={"breath-fg" + (leaving ? " is-leaving" : "")}>
+          <div className="im-progress"><ProgressTracker steps={STEPS} current={idx} /></div>
           {sIntro && <IntroControls onStart={goNext} />}
           {sLearn && <LearnControls />}
           {sEx && <PracticeControls stage={exStage} data={data} set={setData} effThought={effThought} />}
