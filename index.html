@@ -181,6 +181,7 @@
         // newer builds — still in product review
         rethink: "product", stopreappraisal: "product", control: "product",
         settle: "product", refill: "product", rapidrelax: "product",
+        reset4: "product", // 4-step review copy of In-the-Moment Reset
       };
       function statusOf(mod) { return STATUS_BY_ID[mod.id] || "product"; }
 
@@ -238,6 +239,13 @@
           variants: {
             utility:   { src: "in-the-moment-reset.html",   concept: "" },
             immersion: { src: "in-the-moment-reset-3.html", concept: "" },
+          },
+        },
+        {
+          id: "reset4", name: "In-the-Moment Reset (4-step)", tier: "In the moment",
+          // review copy: 6 steps → 4 (Intro+Learn merged; homework folded into tail of Practice)
+          variants: {
+            utility: { src: "in-the-moment-reset-4step.html", concept: "" },
           },
         },
         {
