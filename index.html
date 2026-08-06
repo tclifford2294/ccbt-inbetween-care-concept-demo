@@ -74,11 +74,28 @@
     .mod-dd-item { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; text-align: left; background: transparent;
       border: 0; border-radius: 8px; padding: 8px 10px; color: rgba(255,255,255,.74); font-family: inherit; font-size: 13px;
       font-weight: 400; cursor: pointer; transition: background .12s, color .12s; }
-    .mod-dd-item > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mod-dd-item .mod-dd-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mod-dd-item:hover { background: #31353c; color: #fff; }
     .mod-dd-item.active { background: var(--shell-active); color: #fff; font-weight: 500; }
-    .mod-dd-item .mod-dd-check { margin-left: auto; opacity: 0; font-size: 12px; }
+    .mod-dd-item .mod-dd-check { margin-left: 4px; opacity: 0; font-size: 12px; }
     .mod-dd-item.active .mod-dd-check { opacity: 1; }
+    /* review-status dot that leads each module row (color set inline per status) */
+    .mod-dd-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+
+    /* review-status filter bar: chips span the full mega-menu width and read as a legend too */
+    .mod-dd-filters { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 2px 4px 10px; margin-bottom: 2px; border-bottom: 1px solid var(--shell-line); }
+    .mod-dd-chip { display: inline-flex; align-items: center; gap: 6px; font-family: inherit; font-size: 11px;
+      font-weight: 500; color: rgba(255,255,255,.7); background: rgba(255,255,255,.08);
+      border: 1px solid transparent; border-radius: 999px; padding: 4px 11px; cursor: pointer;
+      white-space: nowrap; transition: background .12s, color .12s, border-color .12s; }
+    .mod-dd-chip:hover { color: #fff; background: rgba(255,255,255,.14); }
+    .mod-dd-chip.active { color: #fff; background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.28); }
+    .mod-dd-chip-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+    .mod-dd-chip-n { opacity: .55; font-weight: 400; }
+    /* when a status filter is active, non-matching modules and now-empty categories are removed
+       (not dimmed); the horizontal multi-column layout is preserved — auto-fit collapses the
+       emptied tracks so the remaining categories flow together across the columns */
 
     /* step navigation for the active module (drives Prev/Next inside the active iframe) */
     .shell-nav { flex: none; display: inline-flex; gap: 6px; }
@@ -143,6 +160,29 @@
       /* Tier order for the module dropdown. Add "Tier 2" / "Tier 3" here as those builds land, and
        * tag the new modules with the matching `tier` — the dropdown groups itself automatically. */
       var TIERS = ["In the moment", "Work through it", "Recharge & connect", "Check in & learn", "Get support"];
+
+      /* Review status per module — the pipeline stage each build is at:
+       *   clinical = signed off by product, ready for clinical review
+       *   product  = still under product-team review
+       *   draft    = early work in progress
+       * Flip a module here as it advances a stage; anything not listed defaults to "product".
+       * The dropdown draws a status dot on every row and a filter/legend chip bar from this. */
+      var STATUS = {
+        clinical: { label: "Ready for clinical", dot: "#5DCAA5" },
+        product:  { label: "In product review",  dot: "#EF9F27" },
+        draft:    { label: "Draft",              dot: "#9aa0aa" },
+      };
+      var STATUS_ORDER = ["clinical", "product", "draft"];
+      var STATUS_BY_ID = {
+        // original set — product-approved, ready for clinical review
+        solving: "clinical", reset: "clinical", grounding: "clinical", selfcompassion: "clinical",
+        support: "clinical", gratitude: "clinical", benefits: "clinical", screener: "clinical",
+        pulse: "clinical", psychoed: "clinical", reflect: "clinical",
+        // newer builds — still in product review
+        rethink: "product", stopreappraisal: "product", control: "product",
+        settle: "product", refill: "product", rapidrelax: "product",
+      };
+      function statusOf(mod) { return STATUS_BY_ID[mod.id] || "product"; }
 
       var MODULES = [
         {
@@ -277,6 +317,7 @@
       /* -------------------------- state -------------------------- */
       var activeShell = "utility";
       var activeModule = "reset";     // start on the module that demos seamless switching
+      var activeStatusFilter = "all"; // review-status chip filter in the module dropdown
       var pending = null;             // { toFrame, target } while a state transfer is in flight
 
       var stamp = Date.now();
@@ -334,21 +375,62 @@
       /* ---- (re)build the module dropdown menu for the active shell, grouped by tier ---- */
       function buildModuleMenu() {
         moduleMenu.innerHTML = "";
+        moduleMenu.dataset.filter = activeStatusFilter;
+
+        // review-status filter bar (spans all columns; doubles as the dot legend)
+        var shellMods = modulesInShell(activeShell);
+        var filters = document.createElement("div");
+        filters.className = "mod-dd-filters";
+        function makeChip(key, label, dotColor, count) {
+          var c = document.createElement("button");
+          c.type = "button";
+          c.className = "mod-dd-chip" + (activeStatusFilter === key ? " active" : "");
+          c.dataset.filter = key;
+          if (dotColor) {
+            var d = document.createElement("span");
+            d.className = "mod-dd-chip-dot"; d.style.background = dotColor;
+            c.appendChild(d);
+          }
+          var t = document.createElement("span"); t.textContent = label; c.appendChild(t);
+          var n = document.createElement("span"); n.className = "mod-dd-chip-n"; n.textContent = count; c.appendChild(n);
+          c.addEventListener("click", function (e) { e.stopPropagation(); setStatusFilter(key); });
+          return c;
+        }
+        filters.appendChild(makeChip("all", "All", null, shellMods.length));
+        STATUS_ORDER.forEach(function (key) {
+          var count = shellMods.filter(function (m) { return statusOf(m) === key; }).length;
+          if (count) filters.appendChild(makeChip(key, STATUS[key].label, STATUS[key].dot, count));
+        });
+        moduleMenu.appendChild(filters);
+
+        var filtered = activeStatusFilter !== "all";
+
         tiersInShell(activeShell).forEach(function (tier) {
+          var mods = modulesInShell(activeShell).filter(function (m) {
+            return (m.tier || "Other") === tier && (!filtered || statusOf(m) === activeStatusFilter);
+          });
+          if (!mods.length) return; // drop categories with nothing left under the active filter
+          // within each category, order by review status: ready-for-clinical first, then in-review, then draft
+          mods.sort(function (a, b) { return STATUS_ORDER.indexOf(statusOf(a)) - STATUS_ORDER.indexOf(statusOf(b)); });
           var group = document.createElement("div");
           group.className = "mod-dd-group";
           var h = document.createElement("div");
           h.className = "mod-dd-heading";
           h.textContent = tier;
           group.appendChild(h);
-          modulesInShell(activeShell)
-            .filter(function (m) { return (m.tier || "Other") === tier; })
-            .forEach(function (mod) {
+          mods.forEach(function (mod) {
               var b = document.createElement("button");
               b.className = "mod-dd-item";
               b.setAttribute("role", "option");
               b.dataset.module = mod.id;
+              b.dataset.status = statusOf(mod);
+              var st = statusOf(mod);
+              var dot = document.createElement("span");
+              dot.className = "mod-dd-dot"; dot.style.background = STATUS[st].dot;
+              dot.title = STATUS[st].label;
+              b.appendChild(dot);
               var name = document.createElement("span");
+              name.className = "mod-dd-name";
               name.textContent = mod.name;
               b.appendChild(name);
               var chk = document.createElement("span");
@@ -371,13 +453,27 @@
         });
       }
 
-      function openMenu() {
-        moduleMenu.hidden = false; // reveal first so we can measure the (wide) panel and clamp it on-screen
+      // switch the active review-status filter: rebuild so non-matching modules (and now-empty
+      // categories) are removed and the rest consolidate into a single column, then re-clamp width
+      function setStatusFilter(key) {
+        activeStatusFilter = key;
+        buildModuleMenu();
+        updateModuleUI();
+        if (!moduleMenu.hidden) positionMenu();
+      }
+
+      // clamp the panel on-screen; its width varies (wide when "All", narrow when filtered)
+      function positionMenu() {
         var r = moduleTrigger.getBoundingClientRect();
         var mw = moduleMenu.offsetWidth;
         var left = Math.max(12, Math.min(r.left, window.innerWidth - mw - 12));
         moduleMenu.style.top = (r.bottom + 6) + "px";
         moduleMenu.style.left = left + "px";
+      }
+
+      function openMenu() {
+        moduleMenu.hidden = false; // reveal first so we can measure the panel and clamp it on-screen
+        positionMenu();
         moduleDD.classList.add("open");
         moduleTrigger.setAttribute("aria-expanded", "true");
       }
