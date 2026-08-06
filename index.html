@@ -42,6 +42,9 @@
     }
     .seg-btn:hover { color: var(--shell-fg); }
     .seg-btn.active { background: var(--shell-active); color: #fff; }
+    /* a shell the active module has no variant for (e.g. a utility-only module) — disabled, not clickable */
+    .seg-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .seg-btn:disabled:hover { color: var(--shell-muted); }
     .seg-btn .m-sub { font-size: 10px; font-weight: 500; letter-spacing: .02em; opacity: .72; }
     .seg-btn.active .m-sub { opacity: .9; }
 
@@ -56,17 +59,24 @@
     .mod-dd-trigger .mod-dd-caret { display: inline-flex; align-items: center; color: var(--shell-muted); transition: transform .15s ease; }
     .mod-dd.open .mod-dd-trigger { border-color: var(--shell-active); }
     .mod-dd.open .mod-dd-trigger .mod-dd-caret { transform: rotate(180deg); }
-    .mod-dd-menu { position: fixed; z-index: 100; min-width: 248px; background: #26292f; border: 1px solid var(--shell-line);
-      border-radius: 12px; padding: 6px; box-shadow: 0 14px 36px rgba(0,0,0,.45); }
+    /* horizontal "mega menu": each functional group is its own column, so the whole set reads at a
+       glance with no long scroll. The grid auto-fits more columns on wider screens, fewer on narrow. */
+    .mod-dd-menu { position: fixed; z-index: 100; display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 4px 8px; align-items: start;
+      width: min(1060px, calc(100vw - 24px)); max-height: calc(100vh - 88px); overflow-y: auto;
+      background: #26292f; border: 1px solid var(--shell-line);
+      border-radius: 14px; padding: 12px; box-shadow: 0 14px 36px rgba(0,0,0,.45); }
     .mod-dd-menu[hidden] { display: none; }
-    .mod-dd-group + .mod-dd-group { border-top: 1px solid var(--shell-line); margin-top: 4px; padding-top: 2px; }
-    .mod-dd-heading { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--shell-muted); padding: 8px 12px 5px; }
-    .mod-dd-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent;
-      border: 0; border-radius: 8px; padding: 9px 12px; color: var(--shell-fg); font-family: inherit; font-size: 13px;
-      font-weight: 500; cursor: pointer; transition: background .12s; }
-    .mod-dd-item:hover { background: #31353c; }
-    .mod-dd-item.active { background: var(--shell-active); color: #fff; }
+    .mod-dd-group { min-width: 0; }
+    .mod-dd-heading { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+      color: rgba(255,255,255,.36); padding: 2px 12px 8px; }
+    /* items sit light + soft so the list recedes; hover/active brighten them and add weight */
+    .mod-dd-item { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; text-align: left; background: transparent;
+      border: 0; border-radius: 8px; padding: 8px 10px; color: rgba(255,255,255,.74); font-family: inherit; font-size: 13px;
+      font-weight: 400; cursor: pointer; transition: background .12s, color .12s; }
+    .mod-dd-item > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mod-dd-item:hover { background: #31353c; color: #fff; }
+    .mod-dd-item.active { background: var(--shell-active); color: #fff; font-weight: 500; }
     .mod-dd-item .mod-dd-check { margin-left: auto; opacity: 0; font-size: 12px; }
     .mod-dd-item.active .mod-dd-check { opacity: 1; }
 
@@ -90,19 +100,19 @@
 <body>
   <div class="shell">
     <div class="shell-bar">
-      <div class="shell-title">CCBT <span>— Module explorer</span></div>
-      <!-- parent-shell switch: Utility ↔ Immersion -->
-      <div class="seg" id="shell-seg" role="tablist" aria-label="Presentation shell"></div>
-      <div class="bar-div"></div>
-      <!-- module switch: a dropdown, grouped by tier -->
+      <div class="shell-title">CCBT <span>— Pick a module</span></div>
+      <!-- module switch: a dropdown, grouped by function -->
       <div class="mod-dd" id="module-dd">
         <button class="mod-dd-trigger" id="module-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Module">
           <span class="mod-dd-kicker">Module</span>
           <span id="module-trigger-label">—</span>
           <span class="mod-dd-caret" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </button>
-        <div class="mod-dd-menu" id="module-menu" role="listbox" aria-label="Modules by tier" hidden></div>
+        <div class="mod-dd-menu" id="module-menu" role="listbox" aria-label="Modules by function" hidden></div>
       </div>
+      <div class="bar-div"></div>
+      <!-- parent-shell switch: Utility ↔ Immersion -->
+      <div class="seg" id="shell-seg" role="tablist" aria-label="Presentation shell"></div>
       <div class="bar-div"></div>
       <!-- step navigation for the active module (replaces each module's in-page prototype footer) -->
       <div class="shell-nav">
@@ -132,11 +142,11 @@
 
       /* Tier order for the module dropdown. Add "Tier 2" / "Tier 3" here as those builds land, and
        * tag the new modules with the matching `tier` — the dropdown groups itself automatically. */
-      var TIERS = ["Tier 1", "Tier 2", "Tier 3"];
+      var TIERS = ["In the moment", "Work through it", "Recharge & connect", "Check in & learn", "Get support"];
 
       var MODULES = [
         {
-          id: "solving", name: "Solving the Problem", tier: "Tier 1",
+          id: "solving", name: "Solving the Problem", tier: "Work through it",
           shared: true, // Utility and Immersion share the step model + inputs; switching transfers state
           variants: {
             utility:   { src: "concept-2.html", concept: "" },
@@ -144,7 +154,7 @@
           },
         },
         {
-          id: "rethink", name: "Rethink the Pressure", tier: "Tier 1",
+          id: "rethink", name: "Rethink the Pressure", tier: "Work through it",
           shared: true, // cognitive reframing / thought record; Utility & Immersion share the thought + evidence + balanced take
           variants: {
             utility:   { src: "rethink-the-pressure-utility.html", concept: "" },
@@ -152,7 +162,38 @@
           },
         },
         {
-          id: "reset", name: "In-the-Moment Reset", tier: "Tier 1",
+          id: "stopreappraisal", name: "STOP + Quick Reappraisal", tier: "In the moment",
+          // utility only for now — no immersion variant built yet, so the Immersion toggle disables on this module
+          variants: {
+            utility: { src: "stop-reappraisal-utility.html", concept: "" },
+          },
+        },
+        {
+          id: "control", name: "Sort What You Can Control", tier: "Work through it",
+          variants: { // utility only for now (Immersion toggle disables on this module)
+            utility: { src: "sort-what-you-can-control-utility.html", concept: "" },
+          },
+        },
+        {
+          id: "settle", name: "Let Your Body Settle", tier: "In the moment",
+          variants: { // utility only for now (Immersion toggle disables on this module)
+            utility: { src: "let-your-body-settle-utility.html", concept: "" },
+          },
+        },
+        {
+          id: "refill", name: "Refill Your Reserves", tier: "Recharge & connect",
+          variants: { // utility only for now (Immersion toggle disables on this module)
+            utility: { src: "refill-your-reserves-utility.html", concept: "" },
+          },
+        },
+        {
+          id: "rapidrelax", name: "Rapid Relaxation", tier: "In the moment",
+          variants: { // utility only for now (Immersion toggle disables on this module)
+            utility: { src: "rapid-relaxation-utility.html", concept: "" },
+          },
+        },
+        {
+          id: "reset", name: "In-the-Moment Reset", tier: "In the moment",
           shared: true, // Concept 1 (Utility) and Concept 3 (Immersion) share step + data
           variants: {
             utility:   { src: "in-the-moment-reset.html",   concept: "" },
@@ -160,7 +201,7 @@
           },
         },
         {
-          id: "grounding", name: "Grounding", tier: "Tier 1",
+          id: "grounding", name: "Grounding", tier: "In the moment",
           shared: true, // 5-4-3-2-1 senses walk; Utility & Immersion share step + tap-counts
           variants: {
             utility:   { src: "grounding-utility.html",   concept: "" },
@@ -168,7 +209,7 @@
           },
         },
         {
-          id: "selfcompassion", name: "Self-Compassion Break", tier: "Tier 1",
+          id: "selfcompassion", name: "Self-Compassion Break", tier: "Recharge & connect",
           shared: true, // Neff notice / not-alone / be-kind; Utility & Immersion share the two lines + chosen reminder
           variants: {
             utility:   { src: "selfcompassion-utility.html",   concept: "" },
@@ -176,7 +217,7 @@
           },
         },
         {
-          id: "support", name: "Support Map", tier: "Tier 1",
+          id: "support", name: "Support Map", tier: "Recharge & connect",
           shared: true, // map your circle (practical / talk-to / lifts-you) + who to reach out to; both looks share the map
           variants: {
             utility:   { src: "support-utility.html",   concept: "" },
@@ -184,7 +225,7 @@
           },
         },
         {
-          id: "gratitude", name: "Three Good Things", tier: "Tier 1",
+          id: "gratitude", name: "Three Good Things", tier: "Recharge & connect",
           shared: true, // name three good things (one per step); both looks share the three entries
           variants: {
             utility:   { src: "gratitude-utility.html",   concept: "" },
@@ -192,7 +233,7 @@
           },
         },
         {
-          id: "benefits", name: "Did You Know", tier: "Tier 1",
+          id: "benefits", name: "Did You Know", tier: "Get support",
           shared: true, // resource-awareness browse; both looks share which benefits were kept handy
           variants: {
             utility:   { src: "didyouknow-utility.html",   concept: "" },
@@ -200,7 +241,7 @@
           },
         },
         {
-          id: "screener", name: "Find Support", tier: "Tier 1",
+          id: "screener", name: "Find Support", tier: "Get support",
           shared: true, // needs screener + resource router; Utility & Immersion share the chosen driver
           variants: {
             utility:   { src: "screener-utility.html",   concept: "" },
@@ -208,7 +249,7 @@
           },
         },
         {
-          id: "pulse", name: "Check-in", tier: "Tier 1",
+          id: "pulse", name: "Check-in", tier: "Check in & learn",
           shared: true, // weekly stress pulse (1-5) + tiered response; Utility & Immersion share the reading
           variants: {
             utility:   { src: "pulse-utility.html",   concept: "" },
@@ -216,7 +257,7 @@
           },
         },
         {
-          id: "psychoed", name: "Know Your Stress", tier: "Tier 2",
+          id: "psychoed", name: "Know Your Stress", tier: "Check in & learn",
           shared: true, // interactive stress-response "wave" explainer; shares active phase + explored set
           variants: {
             utility:   { src: "psychoed-utility.html",   concept: "" },
@@ -224,7 +265,7 @@
           },
         },
         {
-          id: "reflect", name: "Reflect", tier: "Tier 2",
+          id: "reflect", name: "Reflect", tier: "Check in & learn",
           shared: true, // reflective prompt (reframe / lift / boundary) + guided write; shares mode + entries
           variants: {
             utility:   { src: "reflect-utility.html",   concept: "" },
@@ -331,10 +372,12 @@
       }
 
       function openMenu() {
+        moduleMenu.hidden = false; // reveal first so we can measure the (wide) panel and clamp it on-screen
         var r = moduleTrigger.getBoundingClientRect();
+        var mw = moduleMenu.offsetWidth;
+        var left = Math.max(12, Math.min(r.left, window.innerWidth - mw - 12));
         moduleMenu.style.top = (r.bottom + 6) + "px";
-        moduleMenu.style.left = r.left + "px";
-        moduleMenu.hidden = false;
+        moduleMenu.style.left = left + "px";
         moduleDD.classList.add("open");
         moduleTrigger.setAttribute("aria-expanded", "true");
       }
@@ -346,9 +389,11 @@
       function toggleMenu() { if (moduleMenu.hidden) openMenu(); else closeMenu(); }
 
       function render() {
-        // parent-shell active state
+        // parent-shell active state; disable a shell the active module has no variant for
+        var curMod = moduleById(activeModule);
         [].forEach.call(shellSeg.children, function (b) {
           b.classList.toggle("active", b.dataset.shell === activeShell);
+          b.disabled = !(curMod && curMod.variants[b.dataset.shell]);
         });
         // module dropdown for this shell + active state
         buildModuleMenu();
