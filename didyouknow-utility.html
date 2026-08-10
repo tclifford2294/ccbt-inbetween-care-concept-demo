@@ -543,8 +543,8 @@ function Title({ eyebrow, title, children }) {
 // handy. Reuses the Selection Card look, stacked so the blurb sits under the title.
 function ResourceRow({ res, on, onClick }) {
   return (
-    <button className={"selcard" + (on ? " sel" : "")} onClick={onClick} style={{ alignItems: "flex-start" }}>
-      <span className="lead" style={{ marginTop: 2 }}>{res.icon}</span>
+    <button className={"selcard" + (on ? " sel" : "")} onClick={onClick}>
+      <span className="lead">{res.icon}</span>
       <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, textAlign: "left" }}>
         <span style={{ fontWeight: 500, color: "var(--sys-on-surface)" }}>{res.title}</span>
         <span className="sr-label-m" style={{ color: "var(--sys-on-surface-variant)" }}>{res.blurb}</span>

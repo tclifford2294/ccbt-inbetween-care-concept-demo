@@ -235,9 +235,7 @@
     /* ---- "An example" broken into step boxes (per Option Card style) ---- */
     .ex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
     .ex-grid--3 { grid-template-columns: repeat(3, 1fr); }
-    /* min-height removed: the only `.ex-box` here is the learn "pattern" cards, which must size to
-       content (grid row-stretch equalizes them). A fixed min-height made them tall on wide viewports. */
-    .ex-box { display: flex; flex-direction: column; justify-content: flex-start; gap: var(--pad-24);
+    .ex-box { display: flex; flex-direction: column; justify-content: flex-start; gap: var(--pad-24); min-height: 208px;
       background: var(--sys-surface-container-lowest); border: var(--stroke-thin) solid var(--sys-outline-variant);
       border-radius: var(--radius-md); padding: 18px; }
     .ex-box .ex-top { display: flex; align-items: flex-start; justify-content: space-between; }
@@ -248,7 +246,7 @@
     .ex-box .ex-sub { font-size: var(--label-small-size); line-height: var(--label-small-lh); font-weight: var(--label-small-weight); color: var(--sys-on-surface-variant); }
     .ex-box .ex-copy { margin: 0; font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); }
     /* Learn "pattern" cards — big 4 / 6 / repeat numerals (mirrors the Immersion variant, on light surface) */
-    .learn-box { justify-content: flex-start; gap: 8px; }
+    .learn-box { justify-content: flex-start; gap: 8px; min-height: 0; }
     .learn-num { display: flex; align-items: center; height: 32px; font-size: 32px; line-height: 1; font-weight: 500;
       letter-spacing: -0.02em; color: var(--sys-primary); font-variant-numeric: tabular-nums; }
     .learn-num svg { color: var(--sys-primary); }
@@ -383,6 +381,26 @@
     .pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--radius-full); background: var(--state-primary-08); color: var(--sys-primary); font-size: var(--label-small-size); font-weight: 600; }
     .medallion { width: 56px; height: 56px; border-radius: 50%; background: var(--state-primary-08); display: flex; align-items: center; justify-content: center; color: var(--sys-primary); }
     .medallion.solid { background: var(--sys-primary); color: var(--sys-on-primary); }
+
+    /* Rings — Apple Watch-style activity rings (borrowed from Three Good Things) for the celebrate beat */
+    .m-rings { position: relative; width: 104px; height: 104px; display: flex; align-items: center; justify-content: center; background: transparent; }
+    .m-rings svg { display: block; background: transparent; }
+    .m-rings.idle { animation: ringsBreathe 3.6s ease-in-out infinite; }
+    @keyframes ringsBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+    .ring-fill { animation: ringFill 1.15s cubic-bezier(.32,.94,.36,1) both; }
+    @keyframes ringFill { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: 0; } }
+    /* celebrate beat — immersive overlay centered on the breathing background */
+    .celeb-ui { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+      padding: 0 24px; text-align: center; color: var(--sys-primary-container); pointer-events: none; }
+    .celeb-stack { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+    .celeb-title { opacity: 0; animation: celebTitleIn .6s ease 1.45s both; }
+    @keyframes celebTitleIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    /* hide the breathing orb during the celebrate beat so only the ring + title read */
+    .frame.is-celebrate .b2-orb { opacity: 0; transition: opacity .6s ease; }
+    /* leaving the celebrate beat — fade the whole breathing layer + Well Done out so the hand-off to
+       "Pick your moment" is a smooth dissolve rather than a hard cut */
+    .frame.is-celeb-exit .practice-bg-layer { opacity: 0; transition: opacity .4s ease; }
+    .frame.is-celeb-exit .celeb-ui { opacity: 0; transition: opacity .35s ease; }
   </style>
 </head>
 <body>
@@ -601,15 +619,15 @@ function Title({ eyebrow, title, children }) {
  * (Module 1 acute tool) — your first in-the-moment tool.
  * ============================================================ */
 
-// Screen 1 — Learn (Intro + Psychoeducation combined). Orients the user AND teaches the
-// in-4 / out-6 pattern on one screen, so the flow opens straight into "here's the tool + how it works".
-function Learn() {
+// Screen 1 — Orientation
+function Orientation() {
   return (
     <>
       <Title eyebrow="Stress Program · Acute Toolkit" title="In-the-Moment Reset">
         When stress spikes, you don't need a quiet room or ten minutes. One minute of slow, paced
-        breathing — with a longer out-breath than in-breath — signals your nervous system it's safe to
-        settle. Use it the second you feel stress rising: before a meeting, in traffic, after a tough email.
+        breathing — with a longer out-breath than in-breath — is the signal that tells your nervous
+        system it's safe to settle. Use it the second you feel stress rising: before a meeting, in
+        traffic, after a tough email.
       </Title>
       <HeroCard
         icon={<IcWind size={32} />}
@@ -617,6 +635,19 @@ function Learn() {
         subtitle="A guided paced-breathing reset"
         chip="About 1 min · Acute toolkit"
       />
+    </>
+  );
+}
+
+// Screen 2 — Psychoeducation
+function Psychoeducation() {
+  return (
+    <>
+      <Title eyebrow="Learn" title="Why the out-breath matters">
+        Slow, paced breathing is your first in-the-moment tool. The key is a longer out-breath than
+        in-breath — that longer exhale is what tells your nervous system it's safe to settle. No
+        setup needed; start with just one minute.
+      </Title>
       <div>
         <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The pattern — in 4, out 6</span>
         <div className="ex-grid ex-grid--3">
@@ -673,14 +704,18 @@ function useBreath(active) {
   const dur = activePhase === "in" ? IN : OUT;
   const remaining = Math.max(TARGET - tick, 0);
   const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-  const phaseWord = done ? "Nicely done"
+  const phaseWord = done ? "" /* no "Nicely done" — the Well Done screen covers it */
     : phase === "in" ? "Breathe in…"
     : phase === "out" ? "Breathe out…"
     : phase === "paused" ? "Paused"
     : "Ready when you are";
   const onPlay = () => { if (done) { setTick(0); setRunning(true); } else setRunning(r => !r); };
+  // demo/testing helpers: jump the 1-minute timer to 0:03 and let it run out the last few seconds,
+  // or reset it back to "ready"
+  const complete = React.useCallback(() => { setTick(Math.max(TARGET - 3, 0)); setRunning(true); }, []);
+  const reset = React.useCallback(() => { setRunning(false); setTick(0); }, []);
 
-  return { running, done, phase, scale, dur, timeText: mmss(remaining), phaseWord, ambience, setAmbience, onPlay };
+  return { running, done, phase, scale, dur, timeText: mmss(remaining), phaseWord, ambience, setAmbience, onPlay, complete, reset };
 }
 
 // Background: the full-bleed phase color + concentric ripple (fills the card / screen).
@@ -705,7 +740,7 @@ function BreathControls({ breath }) {
       </div>
       <div className="b2-center"><span className="b2-phase">{breath.phaseWord}</span></div>
       <div className="b2-footer">
-        <span className="b2-time">{breath.timeText}</span>
+        <span className="b2-time" onClick={breath.complete} title="Skip to 0:03 (demo)" style={{ cursor: "pointer" }}>{breath.timeText}</span>
         <button className="b2-play" onClick={breath.onPlay} aria-label={breath.running ? "Pause" : "Play"}>
           {breath.done ? <IcRepeat size={26} /> : breath.running ? <IcPause size={28} /> : <IcPlay size={28} />}
         </button>
@@ -723,13 +758,6 @@ function Reflection({ data, set }) {
         even a small shift counts.
       </Title>
       <NonSystem_MoodMeter value={data.mood} onChange={e => set({ ...data, mood: +e.target.value })} />
-      <InputField
-        label="Anything you noticed? (optional)"
-        multiline rows={3}
-        placeholder="A word or two is enough…"
-        value={data.reflection}
-        onChange={e => set({ ...data, reflection: e.target.value })}
-      />
     </>
   );
 }
@@ -765,11 +793,11 @@ function NonSystem_MoodMeter({ value, onChange }) {
   );
 }
 
-// Practice · final sub-stage — the homework cue, folded into the tail of Practice (was its own step).
+// Screen 5 — Homework
 function Homework({ data, set }) {
   return (
     <>
-      <Title eyebrow="Practice · one last thing" title="Pick your moment">
+      <Title eyebrow="Homework" title="Pick your moment">
         This tool works best when it's ready before you need it. Choose one moment this week where
         you'll run one minute of paced breathing.
       </Title>
@@ -783,16 +811,69 @@ function Homework({ data, set }) {
   );
 }
 
+// Rings — Apple Watch-style activity rings (borrowed from Three Good Things). All three fill in with
+// a staggered animation for a light, playful reward beat (not a "module complete" medallion).
+function CelebrateRings() {
+  const RINGS = [
+    { r: 62, a: "#0AB4E6", b: "#19E6CE" }, // single calming ring
+  ];
+  return (
+    <div className="m-rings idle">
+      <svg viewBox="0 0 160 160" width="104" height="104" aria-hidden="true">
+        <defs>
+          {RINGS.map((ring, i) => (
+            <linearGradient key={i} id={"crg" + i} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={ring.a} /><stop offset="100%" stopColor={ring.b} />
+            </linearGradient>
+          ))}
+        </defs>
+        <g transform="rotate(-90 80 80)">
+          {RINGS.map((ring, i) => {
+            const C = 2 * Math.PI * ring.r;
+            return (
+              <g key={i}>
+                <circle cx="80" cy="80" r={ring.r} fill="none" stroke={ring.a} strokeOpacity="0.16" strokeWidth="13" />
+                <circle cx="80" cy="80" r={ring.r} fill="none" stroke={"url(#crg" + i + ")"} strokeWidth="13"
+                  strokeLinecap="round" strokeDasharray={C} strokeDashoffset="0"
+                  className="ring-fill" style={{ "--c": C, animationDelay: (0.55 + i * 0.14) + "s" }} />
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// Screen 5.5 — Celebrate (between breathing and Homework). An immersive beat that stays on the
+// breathing background: the ring fills, "Well Done!" lands in the breath-phase type, then it
+// auto-advances to "Pick your moment" (see the auto-advance effect in App).
+function CelebrateOverlay() {
+  return (
+    <div className="celeb-ui">
+      <div className="celeb-stack">
+        <CelebrateRings />
+        <span className="b2-phase celeb-title">Well Done!</span>
+      </div>
+    </div>
+  );
+}
+
 // Screen 6 — Summary
 function Summary({ data }) {
   const cue = data.cue != null ? CUES[data.cue] : "";
   return (
     <>
       <div className="medallion solid"><IcCheck size={30} /></div>
-      <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)" }}>
-        You don't need a quiet room or ten minutes — one minute of longer exhales can down-shift your
-        whole nervous system.
-      </h1>
+      <div>
+        <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)", margin: 0 }}>
+          You're all set.
+        </h1>
+        <p className="sr-body-m" style={{ margin: "8px 0 0", color: "var(--sys-on-surface-variant)" }}>
+          You don't need a quiet room or ten minutes — one minute of longer exhales can down-shift your
+          whole nervous system.
+        </p>
+      </div>
       <Card>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
@@ -813,8 +894,7 @@ function Summary({ data }) {
 /* ============================================================
  * App — module player shell + prototype controls
  * ============================================================ */
-// Progress tracker — 4 steps. Practice runs two internal sub-stages (breathe → pick cue) that both
-// read as "Practice"; the homework cue now lives at the tail of Practice instead of being its own step.
+// Progress tracker — 4 condensed segments (Intro+Learn share one; Breathing+Homework share Practice).
 const STEPS = [
   { key: "learn",    label: "Learn",    slug: "learn" },
   { key: "practice", label: "Practice", slug: "practice" },
@@ -822,14 +902,17 @@ const STEPS = [
   { key: "done",     label: "Done",     slug: "summary" },
 ];
 
-// Internal linear flow (5 stages) mapped onto the 4 progress steps above via `step`.
-// Nav (in-page + shell Prev/Next) walks STAGES; the tracker highlights STAGES[idx].step.
+// Internal flow — 6 screens (unchanged content), each mapped to a progress segment via `step`.
+// Intro + Learn both sit under segment 0; Breathing + Homework both under segment 1 (Homework now
+// follows breathing as the last screen of Practice). Nav walks STAGES; the tracker lights STAGES[idx].step.
 const STAGES = [
-  { key: "learn",   step: 0 },
-  { key: "breathe", step: 1 },
-  { key: "cue",     step: 1 },
-  { key: "reflect", step: 2 },
-  { key: "done",    step: 3 },
+  { key: "orientation",     step: 0 },
+  { key: "psychoeducation", step: 0 },
+  { key: "exercise",        step: 1 },
+  { key: "celebrate",       step: 1 },
+  { key: "homework",        step: 1 },
+  { key: "reflection",      step: 2 },
+  { key: "summary",         step: 3 },
 ];
 
 // Cue options for the Homework "pick your moment" step (spec examples).
@@ -865,7 +948,11 @@ function App() {
       } else if (m.type === "reset:next") {
         setIdx(function (i) { return Math.min(i + 1, STAGES.length - 1); });
       } else if (m.type === "reset:prev") {
-        setIdx(function (i) { return Math.max(i - 1, 0); });
+        var pt = idx - 1;
+        if (STAGES[pt] && STAGES[pt].key === "celebrate") pt -= 1; // skip the auto-advancing Well Done beat
+        pt = Math.max(pt, 0);
+        if (STAGES[pt] && STAGES[pt].key === "exercise") breath.reset(); // land on "Ready when you are", not a done timer
+        setIdx(pt);
       } else if (m.type === "reset:setState") {
         if (typeof m.idx === "number") { setIdx(m.idx); setShownIdx(m.idx); setLeaving(false); }
         if (m.data && typeof m.data === "object") {
@@ -891,28 +978,76 @@ function App() {
   const cur = STAGES[idx];
   const shown = STAGES[shownIdx];
   const last = idx === STAGES.length - 1;
-  const inEx = cur.key === "breathe";
-  const progressCurrent = STAGES[idx].step; // which of the 4 tracker steps is lit
+  const inEx = cur.key === "exercise";
+  const onCelebrate = cur.key === "celebrate";
+  // During the exit animation `shown` lags `idx`; keep the breathing bg, the Well Done overlay, the
+  // hidden chrome and the hidden orb alive until `shown` catches up — otherwise the celebrate → Pick-
+  // your-moment hand-off flashes a blank white card. Visual flags use (current OR shown); the breath
+  // timer still keys off `cur` only.
+  const showCeleb = onCelebrate || shown.key === "celebrate";
+  const showBreath = inEx || shown.key === "exercise"; // breath controls ONLY in the exercise context
+  const onBreathBg = showBreath || showCeleb; // breathing bg spans practice + celebrate
+  // leaving the celebrate beat (shown still on celebrate, but idx has moved on) — fade the layer out
+  const celebExiting = leaving && shown.key === "celebrate" && cur.key !== "celebrate";
+  const progressCurrent = STAGES[idx].step; // which of the 4 tracker segments is lit
   const breath = useBreath(inEx);
-  // Practice fills the whole screen with the breathing behind a persistent UI frame;
-  // `is-dark` flips the chrome to light glass while the breathing is actively running (dark).
-  const frameClass = "frame" + (inEx ? " is-practice" : "") + (inEx && breath.running ? " is-dark is-running" : "");
+
+  // Celebrate is a brief immersive beat — auto-advance to "Pick your moment" once the ring + title land.
+  React.useEffect(function () {
+    if (STAGES[idx].key !== "celebrate") return;
+    var t = setTimeout(function () { setIdx(function (i) { return Math.min(i + 1, STAGES.length - 1); }); }, 3600);
+    return function () { clearTimeout(t); };
+  }, [idx]);
+
+  // When the 1-minute breathing timer reaches 00:00, glide straight into the Well Done beat.
+  React.useEffect(function () {
+    if (STAGES[idx].key === "exercise" && breath.done) {
+      var t = setTimeout(function () { setIdx(function (i) { return Math.min(i + 1, STAGES.length - 1); }); }, 300);
+      return function () { clearTimeout(t); };
+    }
+  }, [idx, breath.done]);
+
+  // Demo helper: press "F" while on the breathing screen to fast-forward the timer to the end.
+  React.useEffect(function () {
+    function onKey(e) {
+      if ((e.key === "f" || e.key === "F") && STAGES[idx].key === "exercise") breath.complete();
+    }
+    window.addEventListener("keydown", onKey);
+    return function () { window.removeEventListener("keydown", onKey); };
+  }, [idx]);
+
+  // Practice + celebrate fill the screen with the breathing behind a persistent UI frame;
+  // `is-dark` flips the chrome to light glass while breathing runs; `is-running` hides chrome (also on celebrate).
+  const frameClass = "frame"
+    + (onBreathBg ? " is-practice" : "")
+    + (inEx && breath.running ? " is-dark" : "")
+    + ((inEx && (breath.running || breath.done)) || showCeleb ? " is-running" : "")
+    + (showCeleb ? " is-celebrate" : "")
+    + (celebExiting ? " is-celeb-exit" : "");
 
   // Homework requires a chosen cue; every other step is freely advanceable.
-  const canAdvance = cur.key === "cue" ? data.cue != null : true;
+  const canAdvance = cur.key === "homework" ? data.cue != null : true;
 
   const goNext = () => setIdx(idx + 1);
-  const goBack = () => setIdx(idx - 1);
+  const goBack = () => {
+    var pt = idx - 1;
+    if (STAGES[pt] && STAGES[pt].key === "celebrate") pt -= 1; // skip the auto-advancing Well Done beat
+    pt = Math.max(pt, 0);
+    if (STAGES[pt] && STAGES[pt].key === "exercise") breath.reset(); // back to "Ready when you are"
+    setIdx(pt);
+  };
 
   const nextLabel = idx === 0 ? "Let's Get Started" : "Continue";
 
   // Body content follows `shown` (lags `idx` during the exit animation).
   const body = {
-    learn:   <Learn />,
-    breathe: null,
-    cue:     <Homework data={data} set={setData} />,
-    reflect: <Reflection data={data} set={setData} />,
-    done:    <Summary data={data} />,
+    orientation:     <Orientation />,
+    psychoeducation: <Psychoeducation />,
+    exercise:        null,
+    celebrate:       null,
+    reflection:      <Reflection data={data} set={setData} />,
+    homework:        <Homework data={data} set={setData} />,
+    summary:         <Summary data={data} />,
   }[shown.key];
 
   const actions = last ? (
@@ -940,14 +1075,14 @@ function App() {
       {/* persistent full-screen breathing layer — dissolves in/out on entering/leaving Practice */}
       <div className="practice-bg-layer">
         <BreathBackground breath={breath} />
-        <BreathControls breath={breath} />
+        {showCeleb ? <CelebrateOverlay /> : (showBreath ? <BreathControls breath={breath} /> : null)}
       </div>
       <div className="screen">
         <div className="app">
           <HeaderNav />
           <ContentSectionTemplate steps={STEPS} current={progressCurrent} actions={actions}
             contentKey={shown.key} leaving={leaving}
-            whole={shown.key === "learn" || shown.key === "done"}>
+            whole={shown.key === "orientation" || shown.key === "psychoeducation" || shown.key === "summary"}>
             {body}
           </ContentSectionTemplate>
         </div>

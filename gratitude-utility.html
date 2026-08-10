@@ -195,6 +195,8 @@
     .sr-input { height: 56px; padding: 0 16px; }
     .sr-textarea { resize: vertical; min-height: 88px; }
     .sr-input::placeholder, .sr-textarea::placeholder { color: var(--sys-on-surface-variant); }
+    /* Prefilled demo text styled to read like placeholder — faded, but a real value so it carries through */
+    .sr-input.is-prefill, .sr-textarea.is-prefill { color: var(--sys-on-surface-variant); opacity: .7; }
     .sr-input:focus, .sr-textarea:focus { border-color: var(--sys-primary); box-shadow: 0 0 0 1px var(--sys-primary); }
 
     /* ---- Sunrise: Divider ---- */
@@ -292,7 +294,7 @@
     .grd-dot:hover { border-color: var(--sys-primary); background: var(--state-primary-08); }
     .grd-dot.on { background: var(--sys-primary); border-color: var(--sys-primary); color: #fff; transform: scale(1.06);
       box-shadow: 0 8px 20px rgba(7,92,186,.26); }
-    .grd-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 560px; margin: 0; }
+    .grd-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; margin: 0; }
     .grd-count { font-size: var(--label-large-size); line-height: var(--label-large-lh); color: var(--sys-on-surface-variant);
       min-height: 24px; transition: color .2s ease; }
     .grd-count.done { color: var(--sys-success); font-weight: 500; }
@@ -303,41 +305,18 @@
 
     /* ============================================================
        Three Good Things (Utility) — "moment of delight" ported from Immersion:
-       a motif picker under the progress bar + a celebration beat after each good thing.
+       an activity-rings celebration beat after each good thing.
        ============================================================ */
-    /* motif picker — white-card styled */
-    .motif-picker { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:12px; }
-    .motif-picker .mp-label { font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--sys-on-surface-variant); }
-    .mp-seg { display:inline-flex; gap:3px; background:var(--sys-surface-container-high); border:1px solid var(--sys-outline-variant); border-radius:999px; padding:3px; }
-    .mp-btn { border:0; background:transparent; border-radius:999px; padding:5px 13px; font-family:inherit; font-size:12px; font-weight:600; color:var(--sys-on-surface-variant); cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s ease, color .15s ease; white-space:nowrap; }
-    .mp-btn:hover { color:var(--sys-on-surface); }
-    .mp-btn.on { background:var(--sys-primary); color:#fff; }
-
-    /* celebration layout (centered in the card body) */
-    .u-celeb { display:flex; flex-direction:column; align-items:center; text-align:center; gap:26px; padding:12px 0 6px; }
-    .u-celeb-caption { font-size:var(--headline-small-size); line-height:var(--headline-small-lh); font-weight:500; color:var(--sys-primary-container); animation: celFade .6s ease both .12s; }
+    /* celebration layout (centered in the card body) — ring on top, title + supporting text stacked beneath (matches In-the-Moment Reset well-done) */
+    .u-celeb { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:24px; padding:12px 0 6px; }
     .u-celeb-scene { position:relative; display:flex; align-items:center; justify-content:center; }
-    .u-celeb-echo { margin:0; max-width:520px; font-size:var(--body-large-size); line-height:var(--body-large-lh); color:var(--sys-on-surface-variant); font-style:italic; animation: celFade .6s ease both .28s; }
-    .u-celeb-cta { opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .5s ease, transform .5s ease; }
-    .u-celeb-cta.in { opacity:1; transform:none; pointer-events:auto; }
+    .u-celeb-text { display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .u-celeb-caption { font-size:var(--headline-small-size); line-height:var(--headline-small-lh); font-weight:500; color:var(--sys-primary-container); animation: celFade .6s ease both .28s; }
+    .u-celeb-echo { margin:0; max-width:520px; font-size:var(--body-large-size); line-height:var(--body-large-lh); color:var(--sys-on-surface-variant); font-style:italic; animation: celFade .6s ease both .4s; }
     @keyframes celFade { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
     /* Done crest — the collected motif above the recap */
     .u-done-crest { display:flex; align-items:center; justify-content:center; height:112px; }
     .u-done-crest > * { transform:scale(.56); }
-
-    /* --- Stars --- */
-    .m-stars { position:relative; width:300px; height:150px; }
-    .m-star { position:absolute; transform:translate(-50%,-50%); }
-    .m-star svg { display:block; filter: drop-shadow(0 0 12px rgba(255,206,102,.95)); }
-    .m-star.pop { animation: starPop .85s cubic-bezier(.18,1.5,.4,1) both; }
-    .m-star.idle { animation: starTwk 2.8s ease-in-out infinite; }
-    @keyframes starPop { 0%{opacity:0; transform:translate(-50%,-50%) scale(0) rotate(-50deg);} 55%{opacity:1;} 100%{opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0);} }
-    @keyframes starTwk { 0%,100%{opacity:.85;} 50%{opacity:1; filter:drop-shadow(0 0 16px rgba(255,206,102,1));} }
-    .m-line { position:absolute; inset:0; overflow:visible; pointer-events:none; }
-    .m-line path { stroke:rgba(255,196,90,.55); stroke-width:1.5; fill:none; stroke-dasharray:4 5; animation: celFade 1s ease both .3s; }
-    .m-spark { position:absolute; width:6px; height:6px; border-radius:50%; background:rgba(255,224,150,.95); box-shadow:0 0 8px rgba(255,206,102,.9); }
-    .m-spark.go { animation: sparkFly .9s ease-out forwards .25s; }
-    @keyframes sparkFly { 0%{opacity:0; transform:translate(-50%,-50%) scale(1);} 15%{opacity:1;} 100%{opacity:0; transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2);} }
 
     /* --- Rings (Apple Watch-style activity rings) --- */
     .m-rings { position:relative; width:180px; height:180px; display:flex; align-items:center; justify-content:center; }
@@ -346,15 +325,6 @@
     @keyframes ringsBreathe { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.035);} }
     .ring-fill { animation: ringFill 1.15s cubic-bezier(.32,.94,.36,1) both; }
     @keyframes ringFill { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: 0; } }
-
-    /* --- Logo (ComPsych three-arc mark: fills bottom → middle → top) --- */
-    .cl-mark { position:relative; display:flex; align-items:center; justify-content:center; }
-    .cl-mark > svg { overflow:visible; filter: drop-shadow(0 4px 12px rgba(7,15,54,.22)); }
-    .cl-arc.cl-ghost path { fill: rgba(7,15,54,0.12); }
-    .cl-arc.cl-fill path  { fill: var(--sys-primary-container); }
-    .cl-arc.cl-wipe path  { transform-box: fill-box; transform-origin: 50% 100%; animation: clFill 1.05s cubic-bezier(.32,.94,.36,1) both; }
-    @keyframes clFill { from { transform: scaleY(0.06); opacity: .35; } to { transform: scaleY(1); opacity: 1; } }
-    .cl-mark.idle { animation: ringsBreathe 3.6s ease-in-out infinite; }
   </style>
 </head>
 <body>
@@ -643,7 +613,7 @@ function GroundWalk({ data, set, stage }) {
       <Title eyebrow={s.kicker} title={s.title}>{s.hint}</Title>
       {s.type === "write" ? (
         <div className="grd-fields">
-          <textarea className="sr-textarea" rows={3} placeholder={s.ph}
+          <textarea className={"sr-textarea" + (val === s.ph ? " is-prefill" : "")} rows={3} placeholder={s.ph}
             value={val} onChange={e => set({ ...data, [s.field]: e.target.value })} />
         </div>
       ) : (
@@ -658,18 +628,23 @@ function GroundWalk({ data, set, stage }) {
   );
 }
 
-// Screen 3 — Done: a warm sign-off that reflects the three steps back to the member.
-function Done({ data, motif }) {
+// Screen 3 — Done: a warm sign-off. `count` = how many good things were actually named (1–3),
+// so the title, the ring crest, and the recap all reflect a partial run, not a forced three.
+function Done({ data, count }) {
+  const n = Math.min(Math.max(count || 3, 1), 3);
+  const WORDS = ["", "One", "Two", "Three"];
+  // an untouched prefill counts as blank, so the recap shows the example minus the "e.g." lead-in
+  const val = (raw, i) => (raw && raw.trim() && raw !== SC_STEPS[i].ph) ? raw : SC_STEPS[i].ph.replace(/^e\.g\.\s*/, "");
   const rows = [
-    { k: "Good thing #1", v: (data.one && data.one.trim()) ? data.one : SC_STEPS[0].ph.replace(/^e\.g\.\s*/, "") },
-    { k: "Good thing #2", v: (data.two && data.two.trim()) ? data.two : SC_STEPS[1].ph.replace(/^e\.g\.\s*/, "") },
-    { k: "Good thing #3", v: (data.three && data.three.trim()) ? data.three : SC_STEPS[2].ph.replace(/^e\.g\.\s*/, "") },
-  ];
+    { k: "Good thing #1", v: val(data.one, 0) },
+    { k: "Good thing #2", v: val(data.two, 1) },
+    { k: "Good thing #3", v: val(data.three, 2) },
+  ].slice(0, n);
   return (
     <>
-      <div className="u-done-crest"><MotifScene motif={motif || "stars"} count={3} isNew={false} /></div>
+      <div className="u-done-crest"><MotifScene count={n} isNew={false} /></div>
       <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)" }}>
-        Three good things — noticed on purpose.
+        {WORDS[n]} good thing{n === 1 ? "" : "s"} — noticed on purpose.
       </h1>
       <Card muted>
         <p className="sr-body-m" style={{ margin: 0 }}>
@@ -697,11 +672,18 @@ function Done({ data, motif }) {
 /* ============================================================
  * App — module player shell + prototype controls
  * ============================================================ */
+// Four screens, but intro + learn share one progress segment ("Learn"), so the tracker reads
+// Learn · Practice · Done. `step` maps each screen to its SEGMENTS index.
 const STEPS = [
-  { key: "intro",  label: "Start", slug: "intro" },
-  { key: "learn",  label: "Learn", slug: "learn" },
-  { key: "ground", label: "Name",  slug: "name" },
-  { key: "done",   label: "Done",  slug: "done" },
+  { key: "intro",  label: "Start", slug: "intro", step: 0 },
+  { key: "learn",  label: "Learn", slug: "learn", step: 0 },
+  { key: "ground", label: "Name",  slug: "name",  step: 1 },
+  { key: "done",   label: "Done",  slug: "done",  step: 2 },
+];
+const SEGMENTS = [
+  { label: "Learn" },
+  { label: "Practice" },
+  { label: "Done" },
 ];
 
 const SC_LAST = 2; // good-things sub-steps: one(0) → two(1) → three(2)
@@ -718,72 +700,27 @@ const SC_STEPS = [
     ph: "e.g. I finally replied to that email I'd been dreading." },
 ];
 
-// initial data: the three good things
+// initial data: the three good things — prefilled with the examples (shown faded, still editable)
 function emptyEntries() {
-  return { one: "", two: "", three: "" };
+  return { one: SC_STEPS[0].ph, two: SC_STEPS[1].ph, three: SC_STEPS[2].ph };
 }
 
 /* ============================================================
  * Moment-of-delight motifs (ported from the Immersion look).
  * ============================================================ */
-const MOTIFS = [
-  { id: "stars", label: "Stars", emoji: "✨" },
-  { id: "rings", label: "Rings", emoji: "◎" },
-  { id: "logo",  label: "Logo",  emoji: "◠" },
-];
-const CEL_CAPTIONS = ["", "Great job naming your first good thing.", "That's two — lovely.", "Three. Beautifully done."];
+const CEL_CAPTIONS = ["", "Well done naming your first good thing.", "That's two — lovely.", "Three. Beautifully done."];
 const CEL_CTAS = ["", "Let's name another", "Let's name one more"];
-const STAR_POS = [ { left: "24%", top: "60%" }, { left: "50%", top: "30%" }, { left: "76%", top: "58%" } ];
 const CELEB_MS = 1650;
 const CELEB_DONE_MS = 1900;
 
-function StarShape({ size = 42 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <defs>
-        <radialGradient id="starg" cx="40%" cy="34%" r="70%">
-          <stop offset="0%" stopColor="#fff6d6" />
-          <stop offset="60%" stopColor="#ffd166" />
-          <stop offset="100%" stopColor="#f4a83c" />
-        </radialGradient>
-      </defs>
-      <path d="M12 2l2.6 6.3L21 9l-5 4.6L17.5 21 12 17.3 6.5 21 8 13.6 3 9l6.4-.7z" fill="url(#starg)" />
-    </svg>
-  );
-}
-
-// One scene for both the per-entry beat (isNew: animate the newest item) and the Done crest (idle).
-function MotifScene({ motif, count, isNew }) {
-  if (motif === "logo") {
-    const ARCS = [
-      { x: "2.264", y: "12.09", w: "18.527", h: "4.796",  vb: "0 0 19.2818 4.82726", d: "M9.6409 0.00415971C7.74432 -0.0466691 5.86536 0.369028 4.17945 1.21245C2.49354 2.05587 1.05565 3.29951 0 4.82726H19.2818C18.2262 3.29951 16.7883 2.05587 15.1023 1.21245C13.4164 0.369028 11.5375 -0.0466691 9.6409 0.00415971Z" },
-      { x: "1.582", y: "6.319", w: "19.889", h: "9.998",  vb: "0 0 20.6998 10.066",  d: "M10.3487 0.00169587C7.65891 -0.0460333 5.05927 0.941494 3.11947 2.74788C1.17967 4.55426 0.0579042 7.03217 0 9.63861C0 9.78184 0.00399474 9.92429 0.0111847 10.066C0.573608 9.2118 1.26546 8.44452 2.06351 7.78989C4.38906 5.91715 7.32684 4.90826 10.3503 4.94402C13.3738 4.90812 16.3116 5.91703 18.6371 7.78989C19.4348 8.44484 20.1266 9.21207 20.6894 10.066C20.6958 9.92429 20.6998 9.78184 20.6998 9.63861C20.6419 7.03176 19.5198 4.55349 17.5795 2.74704C15.6392 0.940594 13.0389 -0.0466553 10.3487 0.00169587Z" },
-      { x: "0", y: "0", w: "23.06", h: "15.584", vb: "0 0 24 15.6895", d: "M11.9972 5.48972C14.8709 5.44427 17.6505 6.48269 19.7491 8.38578C21.8476 10.2889 23.101 12.9077 23.2447 15.6895C23.921 13.9306 24.1479 12.0393 23.9061 10.177C23.6643 8.31474 22.9609 6.53685 21.856 4.99523C20.7511 3.4536 19.2776 2.19406 17.5613 1.3242C15.845 0.454337 13.9369 0 12 0C10.0631 0 8.15503 0.454337 6.43872 1.3242C4.7224 2.19406 3.24886 3.4536 2.14398 4.99523C1.0391 6.53685 0.335709 8.31474 0.0938929 10.177C-0.147923 12.0393 0.0790229 13.9306 0.755345 15.6895C0.899154 12.9088 2.15186 10.291 4.2492 8.38819C6.34655 6.48541 9.12455 5.44646 11.9972 5.4905V5.48972Z" },
-    ];
-    return (
-      <div className={"cl-mark" + (isNew ? "" : " idle")}>
-        <svg width="220" viewBox="0 0 23.06 16.886" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="clgrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2f8ae8" /><stop offset="100%" stopColor="#075cba" />
-            </linearGradient>
-          </defs>
-          {ARCS.map((a, i) => (
-            <svg key={"g" + i} x={a.x} y={a.y} width={a.w} height={a.h} viewBox={a.vb} className="cl-arc cl-ghost"><path d={a.d} /></svg>
-          ))}
-          {ARCS.map((a, i) => i < count ? (
-            <svg key={"f" + i} x={a.x} y={a.y} width={a.w} height={a.h} viewBox={a.vb}
-              className={"cl-arc cl-fill" + (isNew && i === count - 1 ? " cl-wipe" : "")}><path d={a.d} /></svg>
-          ) : null)}
-        </svg>
-      </div>
-    );
-  }
-  if (motif === "rings") {
+// The celebration scene: three activity rings that fill one per good thing.
+// (isNew: animate the newest ring; idle: the settled Done crest.)
+function MotifScene({ count, isNew }) {
+  {
     const RINGS = [
-      { r: 62, a: "#F31260", b: "#FF7A3D" },
-      { r: 45, a: "#34C759", b: "#A8F24A" },
-      { r: 28, a: "#0AB4E6", b: "#19E6CE" },
+      { r: 62, a: "#F31260", b: "#FF7A3D" }, // red → orange
+      { r: 45, a: "#34C759", b: "#A8F24A" }, // green
+      { r: 28, a: "#0AB4E6", b: "#19E6CE" }, // cyan → teal
     ];
     return (
       <div className={"m-rings" + (isNew ? "" : " idle")}>
@@ -814,63 +751,17 @@ function MotifScene({ motif, count, isNew }) {
       </div>
     );
   }
-  // stars (default)
-  const pts = STAR_POS.slice(0, count);
-  const newest = STAR_POS[count - 1];
-  return (
-    <div className="m-stars">
-      {count >= 2 && (
-        <svg className="m-line" viewBox="0 0 300 150" preserveAspectRatio="none">
-          <path d={pts.map((p, i) => (i ? "L" : "M") + (parseFloat(p.left) / 100 * 300) + " " + (parseFloat(p.top) / 100 * 150)).join(" ")} />
-        </svg>
-      )}
-      {pts.map((p, i) => (
-        <span key={i} className={"m-star " + (isNew && i === count - 1 ? "pop" : "idle")}
-          style={{ left: p.left, top: p.top, animationDelay: (i * 0.1) + "s" }}>
-          <StarShape size={isNew && i === count - 1 ? 48 : 42} />
-        </span>
-      ))}
-      {isNew && Array.from({ length: 6 }).map((_, i) => {
-        const ang = (i / 6) * Math.PI * 2;
-        return <span key={"sp" + i} className="m-spark go"
-          style={{ left: newest.left, top: newest.top, "--dx": Math.cos(ang) * 46 + "px", "--dy": Math.sin(ang) * 46 + "px" }} />;
-      })}
-    </div>
-  );
 }
 
 // The between-screens beat: caption + growing scene + echoed words + (for #1/#2) a Continue button.
-function Celebration({ motif, count, text, onContinue }) {
-  const [showBtn, setShowBtn] = useState(false);
-  React.useEffect(() => {
-    if (!onContinue) return;
-    const t = setTimeout(() => setShowBtn(true), 1250);
-    return () => clearTimeout(t);
-  }, [onContinue]);
+function Celebration({ count, text }) {
+  // progression is handled by the footer Continue / Go Back (no center button)
   return (
     <div className="u-celeb">
-      <span className="u-celeb-caption">{CEL_CAPTIONS[count] || "Noticed."}</span>
-      <div className="u-celeb-scene"><MotifScene motif={motif} count={count} isNew={true} /></div>
-      <p className="u-celeb-echo">{text && text.trim() ? "“" + text.trim() + "”" : "Noticed — that counts too."}</p>
-      {onContinue && (
-        <div className={"u-celeb-cta" + (showBtn ? " in" : "")}>
-          <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={onContinue}>{CEL_CTAS[count] || "Let's name another"}</Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MotifPicker({ value, onChange }) {
-  return (
-    <div className="motif-picker">
-      <span className="mp-label">Delight style</span>
-      <div className="mp-seg">
-        {MOTIFS.map(m => (
-          <button key={m.id} className={"mp-btn" + (value === m.id ? " on" : "")} onClick={() => onChange(m.id)}>
-            <span aria-hidden="true">{m.emoji}</span>{m.label}
-          </button>
-        ))}
+      <div className="u-celeb-scene"><MotifScene count={count} isNew={true} /></div>
+      <div className="u-celeb-text">
+        <span className="u-celeb-caption">{CEL_CAPTIONS[count] || "Noticed."}</span>
+        <p className="u-celeb-echo">{text && text.trim() ? "“" + text.trim() + "”" : "Noticed — that counts too."}</p>
       </div>
     </div>
   );
@@ -880,8 +771,8 @@ function App() {
   const [idx, setIdx] = useState(0);
   const [senseIdx, setSenseIdx] = useState(0);
   const [data, setData] = useState(emptyEntries());
-  const [motif, setMotif] = useState("stars");
   const [celeb, setCeleb] = useState(null); // { count, text, toDone } while a delight beat plays
+  const [namedCount, setNamedCount] = useState(3); // how many good things were named at finish (Done title + crest)
 
   // Shell bridge: read this module's step + progress and hydrate the sibling look (Utility ↔ Immersion)
   // without reloading. The two written lines + chosen reminder transfer, plus the current sub-step via _ex.
@@ -914,40 +805,54 @@ function App() {
   const last = idx === STEPS.length - 1;
   const inGround = cur.key === "ground";
 
-  const advanceFromCeleb = () => { setCeleb(null); setSenseIdx(function (s) { return s + 1; }); };
-
   const goNext = () => {
-    if (celeb) return;
     if (inGround) {
-      const text = data[SC_STEPS[senseIdx].field];
+      if (celeb) {
+        // footer Continue advances off the celebration beat — to the next good thing, or the recap
+        if (celeb.toDone) { setNamedCount(3); setCeleb(null); setIdx(function (i) { return i + 1; }); }
+        else { setCeleb(null); setSenseIdx(function (s) { return s + 1; }); }
+        return;
+      }
+      // untouched prefill echoes as the example minus its "e.g." lead-in
+      const raw = data[SC_STEPS[senseIdx].field];
+      const text = (raw && raw.trim() && raw !== SC_STEPS[senseIdx].ph) ? raw : SC_STEPS[senseIdx].ph.replace(/^e\.g\.\s*/, "");
       const count = senseIdx + 1;
       const toDone = senseIdx >= SC_LAST;
       setCeleb({ count: count, text: text, toDone: toDone });
-      if (toDone) {
-        // the final fill holds a beat, then auto-advances to the recap
-        setTimeout(function () { setCeleb(null); setIdx(function (i) { return i + 1; }); }, CELEB_DONE_MS);
-      }
-      // #1 and #2 wait for the "Let's name another / one more" button (advanceFromCeleb)
     } else {
       setIdx(idx + 1);
     }
   };
-  const goBack = () => { if (celeb) return; if (inGround && senseIdx > 0) setSenseIdx(senseIdx - 1); else if (idx > 0) setIdx(idx - 1); };
+  const goBack = () => {
+    if (inGround && celeb) { setCeleb(null); return; } // step back onto the good thing we just celebrated
+    if (inGround && senseIdx > 0) setSenseIdx(senseIdx - 1);
+    else if (idx > 0) setIdx(idx - 1);
+  };
+  // finish early from a celebration beat (#1 or #2) with just the good things named so far
+  const finishEarly = () => {
+    if (!celeb) return;
+    setNamedCount(celeb.count);
+    setCeleb(null);
+    setIdx(function (i) { return i + 1; });
+  };
+  const showSkip = inGround && celeb && !celeb.toDone; // offered after #1 and #2
 
-  const nextLabel = idx === 0 ? "Begin" : (inGround && senseIdx < SC_LAST ? "Next" : "Continue");
+  const nextLabel = idx === 0 ? "Begin"
+    : (inGround && celeb) ? (celeb.toDone ? "See your three" : (CEL_CTAS[celeb.count] || "Continue"))
+    : (inGround && senseIdx < SC_LAST) ? "Next" : "Continue";
 
   const screen = {
     intro:  <Intro />,
     learn:  <Learn />,
     ground: celeb
-      ? <Celebration motif={motif} count={celeb.count} text={celeb.text} onContinue={celeb.toDone ? null : advanceFromCeleb} />
+      ? <Celebration count={celeb.count} text={celeb.text} />
       : <GroundWalk data={data} set={setData} stage={senseIdx} />,
-    done:   <Done data={data} motif={motif} />,
+    done:   <Done data={data} count={namedCount} />,
   }[cur.key];
 
-  const actions = celeb ? null : last ? (
+  const actions = last ? (
     <>
-      <Button variant="outlined" onClick={() => { setIdx(0); setSenseIdx(0); setData(emptyEntries()); }}>Run it again</Button>
+      <Button variant="outlined" onClick={() => { setIdx(0); setSenseIdx(0); setData(emptyEntries()); setNamedCount(3); }}>Run it again</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Button variant="tonal" leadingIcon={<IcBell size={18} />}>Set a Reminder</Button>
         <Button variant="filled" trailingIcon={<IcArrowR size={18} />}>Back to Stress Program</Button>
@@ -958,6 +863,7 @@ function App() {
       <Button variant="outlined" leadingIcon={<IcChevL size={18} />} disabled={idx === 0} onClick={goBack}>Go Back</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <span className="actions-help">{inGround ? ("Step " + (senseIdx + 1) + " of 3") : ("Step " + (idx + 1) + " of " + STEPS.length)}</span>
+        {showSkip && <Button variant="outlined" onClick={finishEarly}>Finish</Button>}
         <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={goNext}>{nextLabel}</Button>
       </div>
     </>
@@ -968,9 +874,8 @@ function App() {
       <div className="screen" key={cur.key}>
         <div className="app">
           <HeaderNav />
-          <ContentSectionTemplate steps={STEPS} current={idx} actions={actions}
-            whole={cur.key === "intro" || cur.key === "done" || !!celeb}
-            belowProgress={cur.key !== "intro" ? <MotifPicker value={motif} onChange={setMotif} /> : null}>
+          <ContentSectionTemplate steps={SEGMENTS} current={STEPS[idx].step} actions={actions}
+            whole={cur.key === "intro" || cur.key === "done" || !!celeb}>
             {screen}
           </ContentSectionTemplate>
         </div>

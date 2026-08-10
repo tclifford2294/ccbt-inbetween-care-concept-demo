@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CCBT · Grounding — Sunrise prototype</title>
+  <title>CCBT · Solving the Problem — Sunrise prototype</title>
   <style>
     /*
      * Material Sunrise — design tokens (inlined so this file is self-contained).
@@ -195,6 +195,8 @@
     .sr-input { height: 56px; padding: 0 16px; }
     .sr-textarea { resize: vertical; min-height: 88px; }
     .sr-input::placeholder, .sr-textarea::placeholder { color: var(--sys-on-surface-variant); }
+    /* Practice example prompts read as clearly optional, faint hint text (mirrors the Immersion variant) */
+    .ex-stage .sr-input::placeholder, .ex-stage .sr-textarea::placeholder { opacity: .55; }
     .sr-input:focus, .sr-textarea:focus { border-color: var(--sys-primary); box-shadow: 0 0 0 1px var(--sys-primary); }
 
     /* ---- Sunrise: Divider ---- */
@@ -240,6 +242,13 @@
       font-size: 28px; line-height: 1; font-weight: 600; }
     .opt-card.sel .opt-num { background: var(--sys-primary); color: var(--sys-on-primary); }
     .opt-copy { font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: var(--sys-on-surface); padding-bottom: 4px; }
+    /* Homework selection list — the SelectionCard rows used in the Immersion variant */
+    /* action cards match the Brainstorm option fields — default selcard sizing (56px, body-medium), gap 12 */
+    .home-options { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .opt-badge { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center;
+      justify-content: center; font-size: var(--label-large-size); font-weight: 600; font-variant-numeric: tabular-nums;
+      background: var(--sys-primary-fixed-dim); color: var(--sys-primary); }
+    .home-options .selcard.sel .opt-badge { background: var(--sys-primary); color: var(--sys-on-primary); }
 
     /* ---- Sunrise: Option Card (screen-4 style tile) ---- */
     .optgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -282,24 +291,18 @@
     .mood-scale { display: flex; justify-content: space-between; width: 100%; font-size: var(--label-small-size); color: var(--sys-on-surface-variant); }
     .ns-note { font-size: 11px; color: var(--sys-on-surface-variant); font-style: italic; }
 
-    /* ---- Grounding (5-4-3-2-1) — tappable "notice" dots ---- */
-    .grd-wrap { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 8px 0 4px; }
-    .grd-dots { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .grd-dot { width: 60px; height: 60px; flex: none; border-radius: 50%; border: 2px solid var(--sys-outline-variant);
-      background: var(--sys-surface-container-lowest); color: transparent; cursor: pointer; display: inline-flex;
-      align-items: center; justify-content: center;
-      transition: background .18s, border-color .18s, color .18s, transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s; }
-    .grd-dot:hover { border-color: var(--sys-primary); background: var(--state-primary-08); }
-    .grd-dot.on { background: var(--sys-primary); border-color: var(--sys-primary); color: #fff; transform: scale(1.06);
-      box-shadow: 0 8px 20px rgba(7,92,186,.26); }
-    .grd-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 520px; margin: 0 auto; }
-    .grd-count { font-size: var(--label-large-size); line-height: var(--label-large-lh); color: var(--sys-on-surface-variant);
-      min-height: 24px; transition: color .2s ease; }
-    .grd-count.done { color: var(--sys-success); font-weight: 500; }
-
     .pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--radius-full); background: var(--state-primary-08); color: var(--sys-primary); font-size: var(--label-small-size); font-weight: 600; }
     .medallion { width: 56px; height: 56px; border-radius: 50%; background: var(--state-primary-08); display: flex; align-items: center; justify-content: center; color: var(--sys-primary); }
     .medallion.solid { background: var(--sys-primary); color: var(--sys-on-primary); }
+
+    /* Well Done ring (borrowed from Three Good Things) — a light reward beat on the white card */
+    .m-rings { position: relative; width: 104px; height: 104px; display: flex; align-items: center; justify-content: center; }
+    .m-rings svg { display: block; }
+    .m-rings.idle { animation: ringsBreathe 3.6s ease-in-out infinite; }
+    @keyframes ringsBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+    .ring-fill { animation: ringFill 1.15s cubic-bezier(.32,.94,.36,1) both; }
+    @keyframes ringFill { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: 0; } }
+    .wd-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 20px; }
   </style>
 </head>
 <body>
@@ -353,8 +356,7 @@ const IcTarget = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="9"/><circle
 const IcHeart  = (p) => <Icon {...p} d={<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>} />;
 const IcFlag   = (p) => <Icon {...p} d={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></>} />;
 const IcSpark  = (p) => <Icon {...p} d={<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>} />;
-
-const IcAnchor = (p) => <Icon {...p} d={<><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></>} />;
+const IcScale  = (p) => <Icon {...p} d={<><path d="M12 3v18"/><path d="M7 21h10"/><path d="M4 7h16"/><path d="M4 7l-2.4 6a2.4 2.4 0 0 0 4.8 0z"/><path d="M20 7l-2.4 6a2.4 2.4 0 0 0 4.8 0z"/></>} />;
 
 // ComPsych swoosh — real 3-arc mark exported from the GuidanceResources Figma
 // (breadcrumb Logo, Path 3382/3383/3384), composed via nested SVGs, filled primary-container.
@@ -465,7 +467,7 @@ function HeaderNav() {
           <span className="sep">/</span>
           <a href="#" onClick={e=>e.preventDefault()} className="crumb c-muted">Stress</a>
           <span className="sep">/</span>
-          <span className="crumb c-cur">Grounding</span>
+          <span className="crumb c-cur">Solving the Problem</span>
         </nav>
       </div>
       <div className="nav-right">
@@ -514,32 +516,68 @@ function Title({ eyebrow, title, children }) {
 }
 
 /* ============================================================
- * Module screens — Grounding (5-4-3-2-1 five-senses walk)
- * A calm, low-barrier grounding practice for "when your mind won't stop looping."
+ * Module screens — "2. Solving the Problem"  (verbatim copy)
  * ============================================================ */
 
-// Screen 1 — Intro
-function Intro() {
+// Screen 1 — Orientation
+function Orientation() {
   return (
     <>
-      <Title eyebrow="In-Between Care · Grounding" title="Come back to right now">
-        When your mind won't stop looping, your five senses are a simple way back. We'll take a slow
-        walk through them — five things you can see, four you can hear, and so on down to one. There's
-        nothing to get right; noticing is the whole point.
+      <Title eyebrow="Stress Program · Module 2 of 5" title="Solving the Problem">
+        Some stress comes from a specific, solvable problem — a bill you haven't dealt with,
+        a conversation you've been avoiding, a schedule that doesn't work. When we're overwhelmed,
+        it's tempting to avoid these problems entirely, which usually makes the stress louder,
+        not quieter. This module walks you through a structured way to tackle them.
       </Title>
       <HeroCard
-        icon={<IcAnchor size={32} />}
-        title="A five-senses grounding walk"
-        subtitle="Notice each one, tap to mark it, and let your attention settle"
-        chip="About 2 min · Grounding"
+        icon={<IcLightbulb size={32} />}
+        title="Turn one stressor into a clear next step"
+        subtitle="A guided, four-step exercise"
+        chip="About 6 min · Skill-building"
       />
     </>
   );
 }
 
-// Screen 2 — the senses walk. One sense at a time (see 5 → hear 4 → feel 3 → smell 2 → taste 1),
-// driven by the footer Continue / Go Back. Tapping the dots is the practice — never gated, no judgment.
-function GroundWalk({ data, set, stage }) {
+// Screen 2 — Psychoeducation
+function Psychoeducation() {
+  return (
+    <>
+      <Title eyebrow="Learn" title="How problem-solving actually works">
+        Effective problem-solving isn't about finding the perfect answer — it's about having a
+        workable process: naming the problem clearly, brainstorming options without judging them yet,
+        weighing the realistic ones, and picking one to try.
+      </Title>
+      <div>
+        <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>An example — how Devon worked through it</span>
+        <div className="ex-grid">
+          {[
+            { icon: <IcSearch size={20} />,  step: "Naming the problem",    copy: "A repair bill he couldn't afford — and the sleep he was losing over it." },
+            { icon: <IcBulb size={20} />,    step: "Brainstorming options", copy: "Call the shop, ask about a payment plan, check a community assistance program." },
+            { icon: <IcScale size={20} />,   step: "Weighing the options",  copy: "Which of these felt realistic to actually try this week?" },
+            { icon: <IcCheck size={20} />,   step: "Picking one to try",    copy: "He started with one call — and the wall became a short list." },
+          ].map((b, i) => (
+            <div className="ex-box" key={i}>
+              <div className="ex-top">
+                <span className="ex-chip">{b.icon}</span>
+                <span className="ex-info"><IcInfo size={18} /></span>
+              </div>
+              <div className="ex-text">
+                <span className="ex-sub">{b.step}</span>
+                <p className="ex-copy">{b.copy}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Screen 3 — Core Exercise. Immersive sub-flow, one task at a time:
+// 0 Define → 1 Brainstorm → 2 Choose → 3 Review. Driven by the footer Continue/Go Back.
+function CoreExercise({ data, set, stage }) {
+  // Cross-dissolve: fade the current sub-step out, swap content while invisible, fade the next in.
   const [shown, setShown] = useState(stage);
   const [visible, setVisible] = useState(true);
   React.useEffect(() => {
@@ -549,43 +587,146 @@ function GroundWalk({ data, set, stage }) {
     return () => clearTimeout(t);
   }, [stage]);
 
-  const s = SENSES[shown];
-  const vals = data.entries[s.key];
-  const setVal = (i, v) => set({ ...data, entries: { ...data.entries, [s.key]: vals.map((x, k) => k === i ? v : x) } });
-  const filled = vals.filter(v => v && v.trim()).length;
-  const complete = filled >= s.n;
+  const setOpt = (i, v) => set({ ...data, options: data.options.map((o, k) => k === i ? v : o) });
+  const eyebrow = `Practice · ${shown + 1} of 3`;
+  // blank Define field stands in with its faint example, so the recap never reads empty
+  const effProblem = data.problem && data.problem.trim() ? data.problem : PROBLEM_EXAMPLE;
+
+  const stressorRecap = (
+    <Card muted>
+      <div className="ex-recap">
+        <span className="k">Your stressor</span>
+        <p className="sr-body-m" style={{ margin: 0 }}>{effProblem}</p>
+      </div>
+    </Card>
+  );
 
   return (
     <div className={"ex-stage " + (visible ? "in" : "out")}>
-      <Title eyebrow={"Ground · " + (shown + 1) + " of 5"} title={s.title}>
-        {s.hint}
-      </Title>
-      <div className="grd-fields">
-        {vals.map((v, i) => (
-          <input key={i} className="sr-input" placeholder={i === 0 ? s.ph + "…" : "…and another"}
-            value={v} onChange={e => setVal(i, e.target.value)} />
-        ))}
-      </div>
-      <div className={"grd-count" + (complete ? " done" : "")}>
-        {complete ? "Nicely done — take a breath here." : (filled + " of " + s.n + " named")}
-      </div>
+      {shown === 0 && (
+        <>
+          <Title eyebrow={eyebrow} title="Name the problem" />
+          <InputField
+            label="Pick one stressor you're facing right now."
+            multiline rows={3}
+            placeholder={PROBLEM_EXAMPLE}
+            value={data.problem}
+            onChange={e => set({ ...data, problem: e.target.value })}
+          />
+        </>
+      )}
+
+      {shown === 1 && (
+        <>
+          <Title eyebrow={eyebrow} title="Brainstorm three options" />
+          {stressorRecap}
+          <div className="sr-field">
+            <label className="sr-flabel">Now list 3 possible ways to approach it, even imperfect ones.</label>
+            <span className="sr-fhelp">Brainstorm freely — no judging yet.</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 4 }}>
+              {data.options.map((o, i) => (
+                <input key={i} className="sr-input" placeholder={OPTION_EXAMPLES[i]} value={o}
+                       onChange={e => setOpt(i, e.target.value)} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }
 
-// Screen 3 — Done
-function Done() {
+// Screen 4 — Reflection
+function Reflection({ data, set }) {
+  return (
+    <>
+      <Title eyebrow="Reflect" title="A quick check-in">
+        How does it feel to have this written down instead of circling in your head?
+      </Title>
+      <NonSystem_MoodMeter value={data.mood} onChange={e => set({ ...data, mood: +e.target.value })} />
+    </>
+  );
+}
+
+/* NonSystem_MoodMeter — playful mood check (no Sunrise slider component yet).
+ * A face slides along a calming gradient; its expression + the word warm up as you move toward calm. */
+function NonSystem_MoodMeter({ value, onChange }) {
+  const t = (value - 1) / 9;
+  const lerp = (a, b) => Math.round(a + (b - a) * t);
+  const face = `rgb(${lerp(150, 255)}, ${lerp(164, 202)}, ${lerp(201, 78)})`; // cool → warm
+  const curve = (t - 0.5) * 20;                                               // mouth: frown → smile
+  const words = ["Still circling", "Still circling", "A bit tangled", "A bit tangled", "Settling",
+                 "Settling", "Getting clearer", "Getting clearer", "Much clearer", "Much clearer"];
+  return (
+    <div className="mood">
+      <div className="mood-word">{words[value - 1]}</div>
+      <div className="mood-slider">
+        <div className="mood-track" />
+        <div className="mood-thumb" style={{ left: `calc(28px + ${t} * (100% - 56px))` }}>
+          <span className="mood-glow" style={{ background: `radial-gradient(circle, ${face}66 0%, transparent 70%)` }} />
+          <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">
+            <circle cx="24" cy="24" r="22" fill={face} />
+            <circle cx="17.5" cy="20" r="2.6" fill="#37342f" />
+            <circle cx="30.5" cy="20" r="2.6" fill="#37342f" />
+            <path d={`M16 30 Q24 ${30 + curve} 32 30`} stroke="#37342f" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+          </svg>
+        </div>
+        <input type="range" min="1" max="10" value={value} onChange={onChange} className="mood-range" aria-label="Where are you right now?" />
+      </div>
+      <div className="mood-scale"><span>Still circling</span><span>Much clearer</span></div>
+      <div className="ns-note">NonSystem_MoodMeter — pending a published Sunrise mood/slider component.</div>
+    </div>
+  );
+}
+
+// Screen 5 — Homework
+function Homework({ data, set }) {
+  const effProblem = data.problem && data.problem.trim() ? data.problem : PROBLEM_EXAMPLE;
+  return (
+    <>
+      <Title eyebrow="Practice · 3 of 3" title="One small action">
+        Take one small action on your chosen option before the next module — even a first phone
+        call or a five-minute step counts.
+      </Title>
+      <Card muted>
+        <div className="ex-recap">
+          <span className="k">Your stressor</span>
+          <p className="sr-body-m" style={{ margin: 0 }}>{effProblem}</p>
+        </div>
+      </Card>
+      <div className="home-options">
+        {data.options.map((o, i) => (
+          <SelectionCard key={i} selected={data.chosen === i} leadingIcon={<IcArrowR size={20} />}
+            text={o && o.trim() ? o : OPTION_EXAMPLES[i]} onClick={() => set({ ...data, chosen: i })} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+// Screen 6 — Summary
+function Summary({ data }) {
+  const chosen = data.chosen != null ? data.options[data.chosen] : "";
+  const effProblem = data.problem && data.problem.trim() ? data.problem : PROBLEM_EXAMPLE;
   return (
     <>
       <div className="medallion solid"><IcCheck size={30} /></div>
       <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)" }}>
-        You're back in the room.
+        You don't need the perfect solution to feel less stressed — you need a next step.
       </h1>
-      <Card muted>
-        <p className="sr-body-m" style={{ margin: 0 }}>
-          Noticing your senses gently pulls your attention out of the loop and into the present. You can
-          run this anytime the noise picks up — waiting in line, before a meeting, or last thing at night.
-        </p>
+      <Card>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The problem</span>
+            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{effProblem}</p>
+          </div>
+          <Divider />
+          <div>
+            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>Your next step</span>
+            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{chosen && chosen.trim() ? chosen : "—"}</p>
+          </div>
+        </div>
       </Card>
     </>
   );
@@ -594,82 +735,176 @@ function Done() {
 /* ============================================================
  * App — module player shell + prototype controls
  * ============================================================ */
-const STEPS = [
-  { key: "intro",  label: "Start",  slug: "intro" },
-  { key: "ground", label: "Ground", slug: "ground" },
-  { key: "done",   label: "Done",   slug: "done" },
-];
-
-const SENSE_LAST = 4; // ground sub-stages: see(0) hear(1) feel(2) smell(3) taste(4)
-
-const SENSES = [
-  { key: "see",   n: 5, title: "Five things you can see",   hint: "A color, a shape, the way the light falls — anything at all.", ph: "Something you can see" },
-  { key: "hear",  n: 4, title: "Four things you can hear",  hint: "Near or far — a hum, a voice, even your own breath.", ph: "Something you can hear" },
-  { key: "feel",  n: 3, title: "Three things you can feel", hint: "Your feet on the floor, the chair, the air on your skin.", ph: "Something you can feel" },
-  { key: "smell", n: 2, title: "Two things you can smell",  hint: "Coffee, fresh air — or nothing in particular. That counts too.", ph: "Something you can smell" },
-  { key: "taste", n: 1, title: "One thing you can taste",   hint: "A sip of water, the last thing you ate, or just the air.", ph: "Something you can taste" },
-];
-
-// per-sense text entries, one blank per item to notice (5 for see, 4 for hear, …)
-function emptyEntries() {
-  var o = {};
-  SENSES.forEach(function (s) { var a = []; for (var i = 0; i < s.n; i++) a.push(""); o[s.key] = a; });
-  return o;
+// Well Done ring (single calming ring, staggered fill) — same motif as the other modules.
+function CelebrateRings() {
+  const RINGS = [{ r: 62, a: "#0AB4E6", b: "#19E6CE" }];
+  return (
+    <div className="m-rings idle">
+      <svg viewBox="0 0 160 160" width="104" height="104" aria-hidden="true">
+        <defs>
+          {RINGS.map((ring, i) => (
+            <linearGradient key={i} id={"crg" + i} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={ring.a} /><stop offset="100%" stopColor={ring.b} />
+            </linearGradient>
+          ))}
+        </defs>
+        <g transform="rotate(-90 80 80)">
+          {RINGS.map((ring, i) => {
+            const C = 2 * Math.PI * ring.r;
+            return (
+              <g key={i}>
+                <circle cx="80" cy="80" r={ring.r} fill="none" stroke={ring.a} strokeOpacity="0.16" strokeWidth="13" />
+                <circle cx="80" cy="80" r={ring.r} fill="none" stroke={"url(#crg" + i + ")"} strokeWidth="13"
+                  strokeLinecap="round" strokeDasharray={C} strokeDashoffset="0"
+                  className="ring-fill" style={{ "--c": C, animationDelay: (0.2 + i * 0.14) + "s" }} />
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+    </div>
+  );
 }
+
+// Well Done — a light reward beat on the white card, after the "one small action" step.
+function WellDone() {
+  return (
+    <div className="wd-center">
+      <CelebrateRings />
+      <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)", margin: 0 }}>Well Done!</h1>
+    </div>
+  );
+}
+
+// Navigation sequence (screens). `step` maps each screen to a progress segment below — Intro + Learn
+// share segment 0 ("Learn") but remain two separate screens.
+const STEPS = [
+  { key: "orientation",     step: 0 },
+  { key: "psychoeducation", step: 0 },
+  { key: "exercise",        step: 1 },
+  { key: "homework",        step: 1 },
+  { key: "celebrate",       step: 1 },
+  { key: "reflection",      step: 2 },
+  { key: "summary",         step: 3 },
+];
+// Progress tracker segments — Intro + Learn share one; Homework folded into Practice (after the
+// exercise), so Practice covers Define → Brainstorm → Choose.
+const SEGMENTS = [
+  { label: "Learn" },
+  { label: "Practice" },
+  { label: "Reflect" },
+  { label: "Done" },
+];
+
+const EX_LAST = 1; // exercise sub-stages: 0 Define, 1 Brainstorm (choosing moved to Homework)
+
+// Example problem + options shown as faint placeholders (never stored as full-opacity input);
+// effProblem stands in for display downstream if the field is left blank. Mirrors the Immersion variant.
+const PROBLEM_EXAMPLE = "The overdue car repair bill I can't afford right now.";
+const OPTION_EXAMPLES = [
+  "Call the shop and ask for an itemized quote",
+  "Ask about a payment plan",
+  "Check one community assistance program",
+];
 
 function App() {
   const [idx, setIdx] = useState(0);
-  const [senseIdx, setSenseIdx] = useState(0);
-  const [data, setData] = useState({ entries: emptyEntries() });
+  const [exStage, setExStage] = useState(0);
+  const [data, setData] = useState({
+    problem: "",   // blank so the example shows as a faint placeholder; auto-fills for display on Continue
+    options: ["", "", ""],
+    chosen: null,
+    mood: 6,
+    reflection: "",
+  });
 
-  // Shell bridge: read this module's step + progress and hydrate the sibling look (Utility ↔ Immersion)
-  // without reloading. The per-sense text entries transfer, plus the current sense via _ex.
+  // Shell bridge: lets the parent explorer read this module's step + inputs and hydrate the sibling
+  // "look" (Utility ↔ Immersion) without reloading. The full data object transfers (content is the
+  // point of this module), plus the Practice sub-stage via _ex. Symmetric with the Immersion variant.
   React.useEffect(() => {
     function onMsg(e) {
       var m = e && e.data;
       if (!m || typeof m !== "object") return;
       if (m.type === "reset:getState") {
         var w = e.source || window.parent;
-        if (w) w.postMessage({ type: "reset:state", idx: idx, data: { entries: data.entries, _ex: senseIdx } }, "*");
+        if (w) w.postMessage({ type: "reset:state", idx: idx, data: {
+          // report the example when blank so the sibling "look" shows the same stand-in (it treats an
+          // incoming value equal to PROBLEM_EXAMPLE as "not yet typed" and keeps it a faint placeholder)
+          problem: data.problem.trim() ? data.problem : PROBLEM_EXAMPLE, options: data.options, chosen: data.chosen,
+          mood: data.mood, reflection: data.reflection, _ex: exStage,
+        } }, "*");
       } else if (m.type === "reset:next") {
         setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); });
       } else if (m.type === "reset:prev") {
-        setIdx(function (i) { return Math.max(i - 1, 0); });
+        var pt = idx - 1;
+        if (STEPS[pt] && STEPS[pt].key === "celebrate") pt -= 1; // skip the auto-advancing Well Done beat
+        setIdx(Math.max(pt, 0));
       } else if (m.type === "reset:setState") {
         if (typeof m.idx === "number") setIdx(m.idx);
         if (m.data && typeof m.data === "object") {
           var inc = Object.assign({}, m.data);
-          if (typeof inc._ex === "number") setSenseIdx(inc._ex);
+          if (typeof inc._ex === "number") setExStage(inc._ex);
           delete inc._ex;
+          // an incoming problem equal to the shared example seed is "not yet typed" — keep it a
+          // faint placeholder rather than showing it as full-opacity entered text
+          if (inc.problem === PROBLEM_EXAMPLE) inc.problem = "";
           setData(function (d) { return Object.assign({}, d, inc); });
         }
       }
     }
     window.addEventListener("message", onMsg);
     return function () { window.removeEventListener("message", onMsg); };
-  }, [idx, data, senseIdx]);
+  }, [idx, data, exStage]);
 
   const cur = STEPS[idx];
   const last = idx === STEPS.length - 1;
-  const inGround = cur.key === "ground";
+  const inEx = cur.key === "exercise";
+  const progressCurrent = STEPS[idx].step; // which of the 5 tracker segments is lit
+
+  // Well Done auto-advances to Reflect once the ring lands (matches the other modules).
+  React.useEffect(function () {
+    if (STEPS[idx].key !== "celebrate") return;
+    var t = setTimeout(function () { setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); }); }, 2000);
+    return function () { clearTimeout(t); };
+  }, [idx]);
+
+  // Practice is freely advanceable — a blank Define/Brainstorm field stands in with its faint example
+  // (Define via effProblem for display; Brainstorm options auto-filled on Continue).
+  const canAdvance = inEx ? true : (cur.key === "homework" ? data.chosen != null : true);
 
   const goNext = () => {
-    if (inGround && senseIdx < SENSE_LAST) setSenseIdx(senseIdx + 1);
-    else setIdx(idx + 1);
+    if (inEx && exStage < EX_LAST) {
+      setExStage(exStage + 1);
+    } else {
+      // Leaving Brainstorm → fill any blank option with its example placeholder.
+      if (inEx && exStage === 1) {
+        setData({ ...data, options: data.options.map((o, i) => (o && o.trim()) ? o : OPTION_EXAMPLES[i]) });
+      }
+      setIdx(idx + 1);
+    }
   };
-  const goBack = () => { if (inGround && senseIdx > 0) setSenseIdx(senseIdx - 1); else if (idx > 0) setIdx(idx - 1); };
+  const goBack = () => {
+    if (inEx && exStage > 0) { setExStage(exStage - 1); return; }
+    var pt = idx - 1;
+    if (STEPS[pt] && STEPS[pt].key === "celebrate") pt -= 1; // skip the auto-advancing Well Done beat
+    setIdx(Math.max(pt, 0));
+  };
 
-  const nextLabel = idx === 0 ? "Begin" : (inGround && senseIdx < SENSE_LAST ? "Next" : "Continue");
+  const nextLabel = idx === 0 ? "Let's Get Started" : "Continue";
 
   const screen = {
-    intro:  <Intro />,
-    ground: <GroundWalk data={data} set={setData} stage={senseIdx} />,
-    done:   <Done />,
+    orientation:     <Orientation />,
+    psychoeducation: <Psychoeducation />,
+    exercise:        <CoreExercise data={data} set={setData} stage={exStage} />,
+    homework:        <Homework data={data} set={setData} />,
+    celebrate:       <WellDone />,
+    reflection:      <Reflection data={data} set={setData} />,
+    summary:         <Summary data={data} />,
   }[cur.key];
 
-  const actions = last ? (
+  const actions = cur.key === "celebrate" ? null : last ? (
     <>
-      <Button variant="outlined" onClick={() => { setIdx(0); setSenseIdx(0); setData({ entries: emptyEntries() }); }}>Run it again</Button>
+      <Button variant="outlined" onClick={() => { setIdx(0); setExStage(0); }}>Review this module</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Button variant="tonal" leadingIcon={<IcBell size={18} />}>Set a Reminder</Button>
         <Button variant="filled" trailingIcon={<IcArrowR size={18} />}>Back to Stress Program</Button>
@@ -679,8 +914,10 @@ function App() {
     <>
       <Button variant="outlined" leadingIcon={<IcChevL size={18} />} disabled={idx === 0} onClick={goBack}>Go Back</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <span className="actions-help">{inGround ? ("Sense " + (senseIdx + 1) + " of 5") : ("Step " + (idx + 1) + " of " + STEPS.length)}</span>
-        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={goNext}>{nextLabel}</Button>
+        <span className="actions-help">Step {progressCurrent + 1} of {SEGMENTS.length}</span>
+        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} disabled={!canAdvance} onClick={goNext}>
+          {nextLabel}
+        </Button>
       </div>
     </>
   );
@@ -690,8 +927,8 @@ function App() {
       <div className="screen" key={cur.key}>
         <div className="app">
           <HeaderNav />
-          <ContentSectionTemplate steps={STEPS} current={idx} actions={actions}
-            whole={cur.key === "intro" || cur.key === "done"}>
+          <ContentSectionTemplate steps={SEGMENTS} current={progressCurrent} actions={actions}
+            whole={cur.key === "orientation" || cur.key === "psychoeducation" || cur.key === "celebrate" || cur.key === "summary"}>
             {screen}
           </ContentSectionTemplate>
         </div>

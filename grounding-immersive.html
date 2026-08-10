@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CCBT · In-the-Moment Reset — Sunrise prototype</title>
+  <title>CCBT · Grounding (immersive) — Sunrise prototype</title>
   <style>
     /*
      * Material Sunrise — design tokens (inlined so this file is self-contained).
@@ -235,6 +235,7 @@
     /* ---- "An example" broken into step boxes (per Option Card style) ---- */
     .ex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
     .ex-grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .ex-grid--5 { grid-template-columns: repeat(5, 1fr); gap: 10px; }
     .ex-box { display: flex; flex-direction: column; justify-content: flex-start; gap: var(--pad-24); min-height: 208px;
       background: var(--sys-surface-container-lowest); border: var(--stroke-thin) solid var(--sys-outline-variant);
       border-radius: var(--radius-md); padding: 18px; }
@@ -268,9 +269,15 @@
       transition: transform .6s ease, background-color .9s ease; }
     .frame.is-practice .breathe2 { transform: scale(1);
       transition: transform 2.3s cubic-bezier(.16,1,.3,1), background-color .9s ease; }
-    .breathe2.is-in     { background: var(--sys-primary); }
-    .breathe2.is-out    { background: var(--sys-primary-container); }
-    .breathe2.is-paused, .breathe2.is-ready, .breathe2.is-done { background: var(--sys-primary-fixed-dim); }
+    /* a subtle light ramp: starts at the "ready" blue (#e3f2fd) and deepens just slightly across the
+       five senses — staying far lighter than the old Well Done blue. Well Done matches the last sense. */
+    .breathe2.tone-ready  { background: var(--sys-primary-fixed-dim); } /* #e3f2fd */
+    .breathe2.tone-see    { background: #dceffc; }
+    .breathe2.tone-hear   { background: #d5ecfc; }
+    .breathe2.tone-feel   { background: #cee8fb; }
+    .breathe2.tone-smell  { background: #c7e5fb; }
+    .breathe2.tone-taste,
+    .breathe2.tone-celebrate { background: #c0e1fa; } /* Well Done matches the last sense screen */
 
     /* concentric ripple — translucent circles that scale with the breath */
     .b2-orb { position: absolute; top: 50%; left: 50%; width: 340px; height: 340px;
@@ -381,6 +388,40 @@
     .pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--radius-full); background: var(--state-primary-08); color: var(--sys-primary); font-size: var(--label-small-size); font-weight: 600; }
     .medallion { width: 56px; height: 56px; border-radius: 50%; background: var(--state-primary-08); display: flex; align-items: center; justify-content: center; color: var(--sys-primary); }
     .medallion.solid { background: var(--sys-primary); color: var(--sys-on-primary); }
+
+    /* Rings — Apple Watch-style activity rings (borrowed from Three Good Things) for the celebrate beat */
+    .m-rings { position: relative; width: 104px; height: 104px; display: flex; align-items: center; justify-content: center; background: transparent; }
+    .m-rings svg { display: block; background: transparent; }
+    .m-rings.idle { animation: ringsBreathe 3.6s ease-in-out infinite; }
+    @keyframes ringsBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+    .ring-fill { animation: ringFill 1.15s cubic-bezier(.32,.94,.36,1) both; }
+    @keyframes ringFill { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: 0; } }
+    /* celebrate beat — immersive overlay centered on the breathing background */
+    .celeb-ui { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+      padding: 0 24px; text-align: center; color: var(--sys-primary-container); pointer-events: none; }
+    .celeb-stack { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+    .celeb-title { opacity: 0; animation: celebTitleIn .6s ease 1.45s both; }
+    @keyframes celebTitleIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* immersive color screens — drop the top progress tracker + nav, keep the footer (Go Back / Next /
+       counter). is-dark keeps that footer legible on the blue. */
+    .frame.is-bare .navbar { opacity: 0; pointer-events: none; }
+    .frame.is-bare .section-progress { opacity: 0; pointer-events: none; }
+
+    /* immersive prompt — white text by default; dark text on the pale "ready"/early tones */
+    .gnd-ui { color: var(--sys-on-primary); animation: gndIn .5s ease .12s both !important; }
+    .gnd-ui.is-lighttone { color: var(--sys-primary-container); }
+    @keyframes gndIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .gnd-prompt { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 580px; }
+    .gnd-icon { display: inline-flex; margin-bottom: 2px; opacity: .95; }
+    .gnd-desc { margin: 0; font-size: var(--body-large-size); line-height: var(--body-large-lh); color: inherit; }
+    .gnd-guide { font-size: var(--body-medium-size); line-height: var(--body-medium-lh); color: inherit; opacity: .74; }
+    /* hide the breathing orb during the celebrate beat so only the ring + title read */
+    .frame.is-celebrate .b2-orb { opacity: 0; transition: opacity .6s ease; }
+    /* leaving the celebrate beat — fade the whole breathing layer + Well Done out so the hand-off to
+       "Pick your moment" is a smooth dissolve rather than a hard cut */
+    .frame.is-celeb-exit .practice-bg-layer { opacity: 0; transition: opacity .4s ease; }
+    .frame.is-celeb-exit .celeb-ui { opacity: 0; transition: opacity .35s ease; }
   </style>
 </head>
 <body>
@@ -405,6 +446,13 @@ const IcChevL  = (p) => <Icon {...p} d={<polyline points="15 18 9 12 15 6" />} /
 const IcArrowR  = (p) => <Icon {...p} d={<><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>} />;
 const IcArrowUR = (p) => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></>} />;
 const IcCheck   = (p) => <Icon {...p} d={<polyline points="20 6 9 17 4 12" />} />;
+
+/* Sense glyphs for the grounding color screens (inherit the overlay text color via currentColor). */
+const IcEye   = (p) => <Icon {...p} d={<><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/></>} />;
+const IcEar   = (p) => <Icon {...p} d={<><path d="M6 9a6 6 0 0 1 12 0c0 3-2 4.4-3.5 5.9-1 1-1.5 2-1.5 3.1a2.5 2.5 0 0 1-4.5 1.5"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.3-1 2-2 2.8"/></>} />;
+const IcHand  = (p) => <Icon {...p} d={<path d="M8 12V6.5a1.5 1.5 0 0 1 3 0V11m0-1V5a1.5 1.5 0 0 1 3 0v6m0-1V7a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.3-1.8l-2.2-2.2a1.5 1.5 0 0 1 2.1-2.1L8 13"/>} />;
+const IcScent = (p) => <Icon {...p} d={<><path d="M8 20c0-2 1-2 1-4s-1-2-1-4 1-2 1-4"/><path d="M12 20c0-2 1-2 1-4s-1-2-1-4 1-2 1-4"/><path d="M16 20c0-2 1-2 1-4s-1-2-1-4 1-2 1-4"/></>} />;
+const IcDrop  = (p) => <Icon {...p} d={<path d="M12 3.5s5.5 5.6 5.5 9.5a5.5 5.5 0 0 1-11 0C6.5 9.1 12 3.5 12 3.5Z"/>} />;
 
 /* Header icons — exact glyphs exported from the GuidanceResources Figma
  * (Lucide menu / search / bell / file-user), viewBox 0 0 20 20. */
@@ -546,7 +594,7 @@ function HeaderNav() {
           <span className="sep">/</span>
           <a href="#" onClick={e=>e.preventDefault()} className="crumb c-muted">Stress</a>
           <span className="sep">/</span>
-          <span className="crumb c-cur">In-the-Moment Reset</span>
+          <span className="crumb c-cur">Grounding</span>
         </nav>
       </div>
       <div className="nav-right">
@@ -599,45 +647,47 @@ function Title({ eyebrow, title, children }) {
  * (Module 1 acute tool) — your first in-the-moment tool.
  * ============================================================ */
 
-// Screen 1 — Orientation
-function Orientation() {
+// Screen 1 — Intro (a calm orienting card before the immersive senses begin)
+function Intro() {
   return (
     <>
-      <Title eyebrow="Stress Program · Acute Toolkit" title="In-the-Moment Reset">
-        When stress spikes, you don't need a quiet room or ten minutes. One minute of slow, paced
-        breathing — with a longer out-breath than in-breath — is the signal that tells your nervous
-        system it's safe to settle. Use it the second you feel stress rising: before a meeting, in
-        traffic, after a tough email.
+      <Title eyebrow="In-Between Care · Grounding" title="Come back to right now">
+        When your mind won't stop looping, your five senses are a simple way back. We'll walk through
+        them — five things you can see, four you can hear, and so on down to one. Nothing to get right;
+        noticing is the whole point.
       </Title>
       <HeroCard
-        icon={<IcWind size={32} />}
-        title="Down-shift in about a minute"
-        subtitle="A guided paced-breathing reset"
-        chip="About 1 min · Acute toolkit"
+        icon={<IcHeart size={32} />}
+        title="A five-senses grounding walk"
+        subtitle="Notice each one, then continue at your own pace"
+        chip="About 2 min · Grounding"
       />
     </>
   );
 }
 
-// Screen 2 — Psychoeducation
-function Psychoeducation() {
+// Screen 2 — Learn (how the exercise works). Mirrors In-the-Moment Reset's "Why the out-breath
+// matters": a Title + a labeled pattern grid — here the 5-4-3-2-1 sense countdown.
+function Learn() {
   return (
     <>
-      <Title eyebrow="Learn" title="Why the out-breath matters">
-        Slow, paced breathing is your first in-the-moment tool. The key is a longer out-breath than
-        in-breath — that longer exhale is what tells your nervous system it's safe to settle. No
-        setup needed; start with just one minute.
+      <Title eyebrow="Learn" title="How grounding works">
+        When your thoughts won't stop looping, your senses are an anchor to right now. You'll count down
+        through them — five things you can see, then four, three, two, and one. There's nothing to get
+        right; the noticing itself is what settles you.
       </Title>
       <div>
-        <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The pattern — in 4, out 6</span>
-        <div className="ex-grid ex-grid--3">
+        <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>The pattern — 5, 4, 3, 2, 1</span>
+        <div className="ex-grid ex-grid--5">
           {[
-            { num: "4", k: "Inhale", copy: "Gently through your nose." },
-            { num: "6", k: "Exhale", copy: "Slowly through your mouth." },
-            { icon: <IcRepeat size={32} />, k: "Repeat", copy: "Around six breaths — about a minute." },
+            { num: "5", k: "See",   copy: "Look around you." },
+            { num: "4", k: "Hear",  copy: "Near and far." },
+            { num: "3", k: "Feel",  copy: "Touch or texture." },
+            { num: "2", k: "Smell", copy: "Scents in the air." },
+            { num: "1", k: "Taste", copy: "A sip, or the air." },
           ].map((b, i) => (
             <div className="ex-box learn-box" key={i}>
-              <span className="learn-num">{b.num != null ? b.num : b.icon}</span>
+              <span className="learn-num">{b.num}</span>
               <span className="learn-k">{b.k}</span>
               <p className="learn-copy">{b.copy}</p>
             </div>
@@ -648,175 +698,104 @@ function Psychoeducation() {
   );
 }
 
-// Screen 3 — Core Exercise. The immersive breathing player: a pulsating orb
-// paced to in-4 / out-6, with a one-minute session timer and breath count.
-// Ambience options for the top pill (decorative — no audio wired in this prototype).
-const AMBIENCE = ["Chirping Birds", "Ocean Waves", "Gentle Rain", "Silence"];
-
-// Shared breathing state — so the App can render the BACKGROUND (color + ripple) and
-// the FOREGROUND controls in separate DOM slots while sharing one paced timer.
-function useBreath(active) {
-  const IN = 4, OUT = 6, CYCLE = IN + OUT, TARGET = 60; // 1-minute session (matches the "about a minute" copy)
-  const [running, setRunning] = useState(false);
-  const [tick, setTick] = useState(0);
-  const [ambience, setAmbience] = useState(0);
-
-  // Timer only advances while the Practice step is active — so leaving Practice freezes
-  // the breath (no background ticking, and no color flash during the dissolve-out).
-  React.useEffect(() => {
-    if (!running || !active) return;
-    const id = setInterval(() => {
-      setTick(t => {
-        const nt = t + 1;
-        if (nt >= TARGET) { setRunning(false); return TARGET; }
-        return nt;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [running, active]);
-
-  const started = running || tick > 0;
-  const done = tick >= TARGET;
-  const pos = tick % CYCLE;
-  const activePhase = pos < IN ? "in" : "out";
-  const phase = done ? "done" : !started ? "ready" : running ? activePhase : "paused";
-  const scale = !started ? 0.55 : activePhase === "in" ? 1 : 0.5;
-  const dur = activePhase === "in" ? IN : OUT;
-  const remaining = Math.max(TARGET - tick, 0);
-  const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-  const phaseWord = done ? "Nicely done"
-    : phase === "in" ? "Breathe in…"
-    : phase === "out" ? "Breathe out…"
-    : phase === "paused" ? "Paused"
-    : "Ready when you are";
-  const onPlay = () => { if (done) { setTick(0); setRunning(true); } else setRunning(r => !r); };
-
-  return { running, done, phase, scale, dur, timeText: mmss(remaining), phaseWord, ambience, setAmbience, onPlay };
+// The full-screen color field — a solid tone per sense that cross-fades on each Next (no orb).
+function BgField({ tone }) {
+  return <div className={"breathe2 " + (tone || "tone-see")} />;
 }
 
-// Background: the full-bleed phase color + concentric ripple (fills the card / screen).
-function BreathBackground({ breath }) {
+// Immersive sense prompt — a big headline + two description lines on the color field. Keyed by sense
+// so it fades in cleanly each time the prompt changes.
+function SenseOverlay({ sense, light }) {
   return (
-    <div className={"breathe2 is-" + breath.phase}>
-      <div className="b2-orb" style={{ transform: `translate(-50%, -50%) scale(${breath.scale})`, transitionDuration: breath.dur + "s, .5s" }}>
-        <span className="b2-ring a" /><span className="b2-ring b" /><span className="b2-ring c" /><span className="b2-ring d" />
-      </div>
-    </div>
-  );
-}
-
-// Foreground: ambience pill, phase text, timer and the play/pause control.
-function BreathControls({ breath }) {
-  return (
-    <div className={"breath-ui is-" + breath.phase}>
-      <div className="b2-top">
-        <button className="b2-ambience" onClick={() => breath.setAmbience(a => (a + 1) % AMBIENCE.length)} title="Background sound">
-          <IcMusic size={16} />{AMBIENCE[breath.ambience]}<IcChevDown size={16} />
-        </button>
-      </div>
-      <div className="b2-center"><span className="b2-phase">{breath.phaseWord}</span></div>
-      <div className="b2-footer">
-        <span className="b2-time">{breath.timeText}</span>
-        <button className="b2-play" onClick={breath.onPlay} aria-label={breath.running ? "Pause" : "Play"}>
-          {breath.done ? <IcRepeat size={26} /> : breath.running ? <IcPause size={28} /> : <IcPlay size={28} />}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Screen 4 — Reflection
-function Reflection({ data, set }) {
-  return (
-    <>
-      <Title eyebrow="Reflect" title="How's your body now?">
-        A slower out-breath nudges your nervous system toward calm. Notice where you are right now —
-        even a small shift counts.
-      </Title>
-      <NonSystem_MoodMeter value={data.mood} onChange={e => set({ ...data, mood: +e.target.value })} />
-      <InputField
-        label="Anything you noticed? (optional)"
-        multiline rows={3}
-        placeholder="A word or two is enough…"
-        value={data.reflection}
-        onChange={e => set({ ...data, reflection: e.target.value })}
-      />
-    </>
-  );
-}
-
-/* NonSystem_MoodMeter — playful mood check (no Sunrise slider component yet).
- * A face slides along a calming gradient; expression + word warm up toward calm. */
-function NonSystem_MoodMeter({ value, onChange }) {
-  const t = (value - 1) / 9;
-  const lerp = (a, b) => Math.round(a + (b - a) * t);
-  const face = `rgb(${lerp(150, 255)}, ${lerp(164, 202)}, ${lerp(201, 78)})`; // cool → warm
-  const curve = (t - 0.5) * 20;                                               // mouth: frown → smile
-  const words = ["On edge", "On edge", "Tense", "Tense", "Settling",
-                 "Settling", "Softer", "Softer", "Calm", "Calm"];
-  return (
-    <div className="mood">
-      <div className="mood-word">{words[value - 1]}</div>
-      <div className="mood-slider">
-        <div className="mood-track" />
-        <div className="mood-thumb" style={{ left: `calc(28px + ${t} * (100% - 56px))` }}>
-          <span className="mood-glow" style={{ background: `radial-gradient(circle, ${face}66 0%, transparent 70%)` }} />
-          <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">
-            <circle cx="24" cy="24" r="22" fill={face} />
-            <circle cx="17.5" cy="20" r="2.6" fill="#37342f" />
-            <circle cx="30.5" cy="20" r="2.6" fill="#37342f" />
-            <path d={`M16 30 Q24 ${30 + curve} 32 30`} stroke="#37342f" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-          </svg>
+    <div className={"breath-ui gnd-ui" + (light ? " is-lighttone" : "")} key={sense.key}>
+      <div className="b2-center">
+        <div className="gnd-prompt">
+          <span className="gnd-icon">{sense.icon ? React.createElement(sense.icon, { size: 40 }) : null}</span>
+          <div className="b2-phase">{sense.prompt}</div>
+          <p className="gnd-desc">{sense.hint}</p>
+          <p className="gnd-desc gnd-guide">Take a moment to notice them around you — then continue when you're ready.</p>
         </div>
-        <input type="range" min="1" max="10" value={value} onChange={onChange} className="mood-range" aria-label="How's your body now?" />
       </div>
-      <div className="mood-scale"><span>On edge</span><span>Calm</span></div>
-      <div className="ns-note">NonSystem_MoodMeter — pending a published Sunrise mood/slider component.</div>
     </div>
   );
 }
 
-// Screen 5 — Homework
-function Homework({ data, set }) {
+// The soft-blue lead-in — "Ready when you are", modeled on In-the-Moment Reset's opening beat.
+function ReadyOverlay() {
   return (
-    <>
-      <Title eyebrow="Homework" title="Pick your moment">
-        This tool works best when it's ready before you need it. Choose one moment this week where
-        you'll run one minute of paced breathing.
-      </Title>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {CUES.map((c, i) => (
-          <SelectionCard key={i} selected={data.cue === i} leadingIcon={<IcWind size={20} />}
-            text={c} onClick={() => set({ ...data, cue: i })} />
-        ))}
+    <div className="breath-ui gnd-ui is-lighttone" key="ready">
+      <div className="b2-center">
+        <div className="gnd-prompt">
+          <div className="b2-phase">Ready when you are</div>
+          <p className="gnd-desc gnd-guide">We'll go one sense at a time — begin whenever you're ready.</p>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
-// Screen 6 — Summary
-function Summary({ data }) {
-  const cue = data.cue != null ? CUES[data.cue] : "";
+// Rings — Apple Watch-style activity rings (borrowed from Three Good Things). All three fill in with
+// a staggered animation for a light, playful reward beat (not a "module complete" medallion).
+function CelebrateRings() {
+  const RINGS = [
+    { r: 62, a: "#0AB4E6", b: "#19E6CE" }, // single calming ring
+  ];
+  return (
+    <div className="m-rings idle">
+      <svg viewBox="0 0 160 160" width="104" height="104" aria-hidden="true">
+        <defs>
+          {RINGS.map((ring, i) => (
+            <linearGradient key={i} id={"crg" + i} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={ring.a} /><stop offset="100%" stopColor={ring.b} />
+            </linearGradient>
+          ))}
+        </defs>
+        <g transform="rotate(-90 80 80)">
+          {RINGS.map((ring, i) => {
+            const C = 2 * Math.PI * ring.r;
+            return (
+              <g key={i}>
+                <circle cx="80" cy="80" r={ring.r} fill="none" stroke={ring.a} strokeOpacity="0.16" strokeWidth="13" />
+                <circle cx="80" cy="80" r={ring.r} fill="none" stroke={"url(#crg" + i + ")"} strokeWidth="13"
+                  strokeLinecap="round" strokeDasharray={C} strokeDashoffset="0"
+                  className="ring-fill" style={{ "--c": C, animationDelay: (0.55 + i * 0.14) + "s" }} />
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// Screen 5.5 — Celebrate (between breathing and Homework). An immersive beat that stays on the
+// breathing background: the ring fills, "Well Done!" lands in the breath-phase type, then it
+// auto-advances to "Pick your moment" (see the auto-advance effect in App).
+function CelebrateOverlay() {
+  return (
+    <div className="celeb-ui">
+      <div className="celeb-stack">
+        <CelebrateRings />
+        <span className="b2-phase celeb-title">Well Done!</span>
+      </div>
+    </div>
+  );
+}
+
+// Last screen — Done
+function Done() {
   return (
     <>
       <div className="medallion solid"><IcCheck size={30} /></div>
-      <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)" }}>
-        You don't need a quiet room or ten minutes — one minute of longer exhales can down-shift your
-        whole nervous system.
-      </h1>
-      <Card>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>Your reset</span>
-            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>Paced breathing — in for 4, out for 6, for about a minute.</p>
-          </div>
-          <Divider />
-          <div>
-            <span className="eyebrow" style={{ color: "var(--sys-on-surface-variant)" }}>When you'll use it</span>
-            <p className="sr-body-m" style={{ margin: "4px 0 0" }}>{cue && cue.trim() ? cue : "—"}</p>
-          </div>
-        </div>
-      </Card>
+      <div>
+        <h1 className="sr-headline-m" style={{ color: "var(--sys-primary-container)", margin: 0 }}>
+          You're back in the room.
+        </h1>
+        <p className="sr-body-m" style={{ margin: "8px 0 0", color: "var(--sys-on-surface-variant)" }}>
+          Noticing your senses gently pulls your attention out of the loop and into the present. Run it
+          anytime the noise picks up — waiting in line, before a meeting, or last thing at night.
+        </p>
+      </div>
     </>
   );
 }
@@ -824,64 +803,75 @@ function Summary({ data }) {
 /* ============================================================
  * App — module player shell + prototype controls
  * ============================================================ */
-const STEPS = [
-  { key: "orientation",     label: "Intro",     slug: "orientation" },
-  { key: "psychoeducation", label: "Learn",     slug: "learn" },
-  { key: "exercise",        label: "Practice",  slug: "practice" },
-  { key: "reflection",      label: "Reflect",   slug: "reflect" },
-  { key: "homework",        label: "Homework",  slug: "homework" },
-  { key: "summary",         label: "Done",      slug: "summary" },
+const SENSES = [
+  { key: "see",   n: 5, icon: IcEye,   prompt: "Five things you can see",   hint: "A color, a shape, the way the light falls — anything at all." },
+  { key: "hear",  n: 4, icon: IcEar,   prompt: "Four things you can hear",  hint: "Near or far — a hum, a voice, even your own breath." },
+  { key: "feel",  n: 3, icon: IcHand,  prompt: "Three things you can feel", hint: "Your feet on the floor, the chair, the air on your skin." },
+  { key: "smell", n: 2, icon: IcScent, prompt: "Two things you can smell",  hint: "Coffee, fresh air — or nothing in particular. That counts too." },
+  { key: "taste", n: 1, icon: IcDrop,  prompt: "One thing you can taste",   hint: "A sip of water, the last thing you ate, or just the air." },
 ];
+function senseByKey(k) { for (var i = 0; i < SENSES.length; i++) if (SENSES[i].key === k) return SENSES[i]; return null; }
 
-// Cue options for the Homework "pick your moment" step (spec examples).
-const CUES = [
-  "Before a stressful meeting",
-  "When I'm stuck in traffic",
-  "After a tough email",
+// Background tone per immersive stage — a single blue that deepens toward the Well Done shade.
+// `light` marks the pale blues that need dark text + dark chrome (like the reset "ready" state).
+const TONES = {
+  ready: { cls: "tone-ready", light: true },
+  see:   { cls: "tone-see",   light: true },
+  hear:  { cls: "tone-hear",  light: true },
+  feel:  { cls: "tone-feel",  light: true },
+  smell: { cls: "tone-smell", light: true },
+  taste: { cls: "tone-taste", light: true },
+  celebrate: { cls: "tone-celebrate", light: false },
+};
+
+// Progress tracker — 3 segments; the lead-in + five senses all sit under "Ground".
+const STEPS = [
+  { key: "start",  label: "Start",  slug: "intro" },
+  { key: "ground", label: "Practice", slug: "ground" },
+  { key: "done",   label: "Done",   slug: "done" },
+];
+// Internal flow: intro → "Ready when you are" → five sense color fields → Well Done → done.
+const STAGES = [
+  { key: "intro",     step: 0 },
+  { key: "learn",     step: 0 },
+  { key: "ready",     step: 1 },
+  { key: "see",       step: 1 },
+  { key: "hear",      step: 1 },
+  { key: "feel",      step: 1 },
+  { key: "smell",     step: 1 },
+  { key: "taste",     step: 1 },
+  { key: "celebrate", step: 1 },
+  { key: "done",      step: 2 },
 ];
 
 function App() {
   const [idx, setIdx] = useState(0);
   const [shownIdx, setShownIdx] = useState(0);
   const [leaving, setLeaving] = useState(false);
-  const [data, setData] = useState({
-    mood: 6,
-    reflection: "",
-    cue: null,
-  });
 
-  // Shell bridge: lets the parent concept-explorer read this module's current step + data and
-  // hydrate a sibling "look" (Utility ↔ Immersion) without reloading, so switching presentation
-  // keeps you on the same page with the same inputs. Re-subscribes on [idx, data] so a getState
-  // reply always carries fresh values.
+  // Shell bridge — report the current step; grounding has no inputs to carry.
   React.useEffect(() => {
     function onMsg(e) {
       var m = e && e.data;
       if (!m || typeof m !== "object") return;
       if (m.type === "reset:getState") {
         var w = e.source || window.parent;
-        // mood is intentionally look-local — each look re-asks "how do you feel now". Only the step
-        // and the chosen cue (plus any reflection note) carry across.
-        if (w) w.postMessage({ type: "reset:state", idx: idx, data: { reflection: data.reflection, cue: data.cue } }, "*");
+        if (w) w.postMessage({ type: "reset:state", idx: idx, data: {} }, "*");
       } else if (m.type === "reset:next") {
-        setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); });
+        setIdx(function (i) { return Math.min(i + 1, STAGES.length - 1); });
       } else if (m.type === "reset:prev") {
-        setIdx(function (i) { return Math.max(i - 1, 0); });
+        var pt = idx - 1;
+        if (STAGES[pt] && STAGES[pt].key === "celebrate") pt -= 1; // skip the auto-advancing Well Done beat
+        setIdx(Math.max(pt, 0));
       } else if (m.type === "reset:setState") {
         if (typeof m.idx === "number") { setIdx(m.idx); setShownIdx(m.idx); setLeaving(false); }
-        if (m.data && typeof m.data === "object") {
-          var inc = Object.assign({}, m.data);
-          delete inc.mood; // never accept a foreign mood — it stays look-local
-          setData(function (d) { return Object.assign({}, d, inc); });
-        }
       }
     }
     window.addEventListener("message", onMsg);
     return function () { window.removeEventListener("message", onMsg); };
-  }, [idx, data]);
+  }, [idx]);
 
-  // Step transition: when the step changes, let the current card content animate OUT
-  // (fade + drop off-screen) before the next step's content swaps in.
+  // Cross-dissolve card content on stage change (intro/done cards; immersive stages have null body).
   React.useEffect(() => {
     if (idx === shownIdx) return;
     setLeaving(true);
@@ -889,36 +879,61 @@ function App() {
     return () => clearTimeout(t);
   }, [idx]);
 
-  const cur = STEPS[idx];
-  const shown = STEPS[shownIdx];
-  const last = idx === STEPS.length - 1;
-  const inEx = cur.key === "exercise";
-  const breath = useBreath(inEx);
-  // Practice fills the whole screen with the breathing behind a persistent UI frame;
-  // `is-dark` flips the chrome to light glass while the breathing is actively running (dark).
-  const frameClass = "frame" + (inEx ? " is-practice" : "") + (inEx && breath.running ? " is-dark is-running" : "");
+  const cur = STAGES[idx];
+  const shown = STAGES[shownIdx];
+  const last = idx === STAGES.length - 1;
+  const progressCurrent = STAGES[idx].step;
 
-  // Homework requires a chosen cue; every other step is freely advanceable.
-  const canAdvance = cur.key === "homework" ? data.cue != null : true;
+  const curSense = senseByKey(cur.key);
+  const onSense = !!curSense;
+  const onReady = cur.key === "ready";
+  const onColor = onReady || onSense;           // immersive color screens
+  const curTone = TONES[cur.key];               // { cls, light } for the current color field
+  const onCelebrate = cur.key === "celebrate";
+  // keep the color field + Well Done overlay + hidden chrome alive through the exit animation (shown lags idx)
+  const showCeleb = onCelebrate || shown.key === "celebrate";
+  const onImmersive = onColor || onCelebrate || !!TONES[shown.key];
+  const celebExiting = leaving && shown.key === "celebrate" && cur.key !== "celebrate";
+
+  // Well Done is a brief immersive beat — auto-advance to Done once the ring + title land.
+  React.useEffect(function () {
+    if (STAGES[idx].key !== "celebrate") return;
+    var t = setTimeout(function () { setIdx(function (i) { return Math.min(i + 1, STAGES.length - 1); }); }, 3600);
+    return function () { clearTimeout(t); };
+  }, [idx]);
+
+  // Immersive color screens: drop the top progress tracker + nav (is-bare), keep the footer legible on
+  // the blue (is-dark). Well Done hides all chrome (is-running).
+  const frameClass = "frame"
+    + (onImmersive ? " is-practice" : "")
+    + (onColor && curTone && !curTone.light ? " is-dark" : "")  // light chrome only on the deeper blues
+    + (onColor && !onReady ? " is-bare" : "")                   // fade tracker + nav on the sense screens (Ready keeps them)
+    + (showCeleb ? " is-running is-celebrate" : "")
+    + (celebExiting ? " is-celeb-exit" : "");
 
   const goNext = () => setIdx(idx + 1);
-  const goBack = () => setIdx(idx - 1);
+  const goBack = () => {
+    var pt = idx - 1;
+    if (STAGES[pt] && STAGES[pt].key === "celebrate") pt -= 1; // skip the Well Done beat going back
+    setIdx(Math.max(pt, 0));
+  };
 
-  const nextLabel = idx === 0 ? "Let's Get Started" : "Continue";
+  const nextLabel = idx === 0 ? "Begin" : cur.key === "learn" ? "Continue" : onReady ? "Start" : (cur.key === "taste" ? "Continue" : "Next");
 
-  // Body content follows `shown` (lags `idx` during the exit animation).
-  const body = {
-    orientation:     <Orientation />,
-    psychoeducation: <Psychoeducation />,
-    exercise:        null,
-    reflection:      <Reflection data={data} set={setData} />,
-    homework:        <Homework data={data} set={setData} />,
-    summary:         <Summary data={data} />,
-  }[shown.key];
+  // intro/done render as cards; ready + sense + celebrate render on the color field (null card body)
+  const body = { intro: <Intro />, learn: <Learn />, done: <Done /> }[shown.key] || null;
+
+  const senseNum = onSense ? (SENSES.findIndex(function (s) { return s.key === cur.key; }) + 1) : 0;
+  const helpText = onSense ? ("Sense " + senseNum + " of 5")
+    : onReady ? "Grounding"
+    : ("Step " + (progressCurrent + 1) + " of " + STEPS.length);
+  // which tone the color field shows — the current stage's blue, holding through Well Done/exit
+  const fieldTone = curTone ? curTone.cls
+    : (showCeleb ? "tone-celebrate" : (TONES[shown.key] ? TONES[shown.key].cls : "tone-see"));
 
   const actions = last ? (
     <>
-      <Button variant="outlined" onClick={() => setIdx(0)}>Review this module</Button>
+      <Button variant="outlined" onClick={() => { setIdx(0); setShownIdx(0); }}>Run it again</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Button variant="tonal" leadingIcon={<IcBell size={18} />}>Set a Reminder</Button>
         <Button variant="filled" trailingIcon={<IcArrowR size={18} />}>Back to Stress Program</Button>
@@ -928,32 +943,29 @@ function App() {
     <>
       <Button variant="outlined" leadingIcon={<IcChevL size={18} />} disabled={idx === 0} onClick={goBack}>Go Back</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <span className="actions-help">Step {idx + 1} of {STEPS.length}</span>
-        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} disabled={!canAdvance} onClick={goNext}>
-          {nextLabel}
-        </Button>
+        <span className="actions-help">{helpText}</span>
+        <Button variant="filled" trailingIcon={<IcArrowR size={18} />} onClick={goNext}>{nextLabel}</Button>
       </div>
     </>
   );
 
   return (
     <div className={frameClass}>
-      {/* persistent full-screen breathing layer — dissolves in/out on entering/leaving Practice */}
+      {/* full-screen color field — cross-fades tone per sense; holds through the Well Done beat */}
       <div className="practice-bg-layer">
-        <BreathBackground breath={breath} />
-        <BreathControls breath={breath} />
+        <BgField tone={fieldTone} />
+        {showCeleb ? <CelebrateOverlay /> : (onReady ? <ReadyOverlay /> : (curSense ? <SenseOverlay sense={curSense} light={curTone && curTone.light} /> : null))}
       </div>
       <div className="screen">
         <div className="app">
           <HeaderNav />
-          <ContentSectionTemplate steps={STEPS} current={idx} actions={actions}
+          <ContentSectionTemplate steps={STEPS} current={progressCurrent} actions={actions}
             contentKey={shown.key} leaving={leaving}
-            whole={shown.key === "orientation" || shown.key === "psychoeducation" || shown.key === "summary"}>
+            whole={shown.key === "intro" || shown.key === "learn" || shown.key === "done"}>
             {body}
           </ContentSectionTemplate>
         </div>
       </div>
-
     </div>
   );
 }

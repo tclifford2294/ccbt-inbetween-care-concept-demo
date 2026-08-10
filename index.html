@@ -175,23 +175,29 @@
       var STATUS_ORDER = ["clinical", "product", "draft"];
       var STATUS_BY_ID = {
         // original set — product-approved, ready for clinical review
-        solving: "clinical", reset: "clinical", grounding: "clinical", selfcompassion: "clinical",
+        reset4: "clinical", solving: "clinical", grounding: "clinical", selfcompassion: "clinical",
         support: "clinical", gratitude: "clinical", benefits: "clinical", screener: "clinical",
         pulse: "clinical", psychoed: "clinical", reflect: "clinical",
         // newer builds — still in product review
         rethink: "product", stopreappraisal: "product", control: "product",
         settle: "product", refill: "product", rapidrelax: "product",
-        reset4: "product", // 4-step review copy of In-the-Moment Reset
       };
       function statusOf(mod) { return STATUS_BY_ID[mod.id] || "product"; }
 
       var MODULES = [
         {
-          id: "solving", name: "Solving the Problem", tier: "Work through it",
-          shared: true, // Utility and Immersion share the step model + inputs; switching transfers state
+          id: "reset4", name: "In-the-Moment Reset", tier: "In the moment",
+          // 4-step condensed flow (Intro+Learn share one segment; Breathing+Homework share Practice,
+          // Homework after breathing; immersive Well Done beat). Replaces the original 6-step reset.
           variants: {
-            utility:   { src: "concept-2.html", concept: "" },
-            immersion: { src: "solving-the-problem-immersion.html", concept: "" },
+            utility: { src: "in-the-moment-reset-4step.html", concept: "" },
+          },
+        },
+        {
+          id: "solving", name: "Solving the Problem", tier: "Work through it",
+          // Learn (Intro + Learn) → Practice (Define → Brainstorm → One small action → Well Done) → Reflect → Done
+          variants: {
+            utility: { src: "solving-the-problem-v2.html", concept: "" },
           },
         },
         {
@@ -234,26 +240,11 @@
           },
         },
         {
-          id: "reset", name: "In-the-Moment Reset", tier: "In the moment",
-          shared: true, // Concept 1 (Utility) and Concept 3 (Immersion) share step + data
-          variants: {
-            utility:   { src: "in-the-moment-reset.html",   concept: "" },
-            immersion: { src: "in-the-moment-reset-3.html", concept: "" },
-          },
-        },
-        {
-          id: "reset4", name: "In-the-Moment Reset (4-step)", tier: "In the moment",
-          // review copy: 6 steps → 4 (Intro+Learn merged; homework folded into tail of Practice)
-          variants: {
-            utility: { src: "in-the-moment-reset-4step.html", concept: "" },
-          },
-        },
-        {
           id: "grounding", name: "Grounding", tier: "In the moment",
-          shared: true, // 5-4-3-2-1 senses walk; Utility & Immersion share step + tap-counts
+          // immersive 5-4-3-2-1: intro → How grounding works → full-screen color field per sense
+          // (prompt + guide, Next holds a soft blue), then a Well Done beat before Done
           variants: {
-            utility:   { src: "grounding-utility.html",   concept: "" },
-            immersion: { src: "grounding-immersion.html", concept: "" },
+            utility: { src: "grounding-immersive.html", concept: "" },
           },
         },
         {
@@ -324,7 +315,7 @@
 
       /* -------------------------- state -------------------------- */
       var activeShell = "utility";
-      var activeModule = "reset";     // start on the module that demos seamless switching
+      var activeModule = "reset4";    // load the In-the-Moment Reset (4-step) by default
       var activeStatusFilter = "all"; // review-status chip filter in the module dropdown
       var pending = null;             // { toFrame, target } while a state transfer is in flight
 

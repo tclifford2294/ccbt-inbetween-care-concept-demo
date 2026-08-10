@@ -195,6 +195,8 @@
     .sr-input { height: 56px; padding: 0 16px; }
     .sr-textarea { resize: vertical; min-height: 88px; }
     .sr-input::placeholder, .sr-textarea::placeholder { color: var(--sys-on-surface-variant); }
+    /* Prefilled demo text styled to read like placeholder — faded, but a real value so it carries through */
+    .sr-input.is-prefill, .sr-textarea.is-prefill { color: var(--sys-on-surface-variant); opacity: .7; }
     .sr-input:focus, .sr-textarea:focus { border-color: var(--sys-primary); box-shadow: 0 0 0 1px var(--sys-primary); }
 
     /* ---- Sunrise: Divider ---- */
@@ -292,9 +294,9 @@
     .grd-dot:hover { border-color: var(--sys-primary); background: var(--state-primary-08); }
     .grd-dot.on { background: var(--sys-primary); border-color: var(--sys-primary); color: #fff; transform: scale(1.06);
       box-shadow: 0 8px 20px rgba(7,92,186,.26); }
-    .grd-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 620px; margin: 0; }
+    .grd-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; margin: 0; }
     /* roomier write field — mirrors the immersion glass panel / Solving the Problem practice box */
-    .grd-fields .sr-textarea { min-height: 120px; font-size: var(--body-large-size); line-height: var(--body-large-lh); }
+    .grd-fields .sr-textarea { min-height: 120px; }
     .grd-count { font-size: var(--label-large-size); line-height: var(--label-large-lh); color: var(--sys-on-surface-variant);
       min-height: 24px; transition: color .2s ease; }
     .grd-count.done { color: var(--sys-success); font-weight: 500; }
@@ -525,11 +527,10 @@ function Title({ eyebrow, title, children }) {
 // Shared: the reach step's options are the three people the member just named (falling back to a
 // gentle generic label if a slot was left blank), so the choose payoff shows their actual circle.
 function reachOptions(data) {
-  return [
-    (data.practical || "").trim() || SC_STEPS[0].ph.replace(/^e\.g\.\s*/, ""),
-    (data.vent || "").trim() || SC_STEPS[1].ph.replace(/^e\.g\.\s*/, ""),
-    (data.lift || "").trim() || SC_STEPS[2].ph.replace(/^e\.g\.\s*/, ""),
-  ];
+  // an untouched prefill counts as blank, so options never show the raw "e.g." example text
+  var pick = (raw, i) => (raw && raw.trim() && raw !== SC_STEPS[i].ph)
+    ? raw.trim() : SC_STEPS[i].ph.replace(/^e\.g\.\s*/, "");
+  return [pick(data.practical, 0), pick(data.vent, 1), pick(data.lift, 2)];
 }
 
 // Screen 1 — Intro
@@ -573,7 +574,7 @@ function GroundWalk({ data, set, stage }) {
       <Title eyebrow={s.kicker} title={s.title}>{s.hint}</Title>
       {s.type === "write" ? (
         <div className="grd-fields">
-          <textarea className="sr-textarea" rows={3} placeholder={s.ph}
+          <textarea className={"sr-textarea" + (val === s.ph ? " is-prefill" : "")} rows={3} placeholder={s.ph}
             value={val} onChange={e => set({ ...data, [s.field]: e.target.value })} />
         </div>
       ) : (
@@ -590,11 +591,14 @@ function GroundWalk({ data, set, stage }) {
 
 // Screen 3 — Done: reflect the circle back, plus who they'll reach out to first.
 function Done({ data }) {
-  const reachName = typeof data.reach === "number" ? reachOptions(data)[data.reach] : "";
+  // blank (or untouched-prefill) write fields fall back to their example minus the "e.g." lead-in
+  const ex = (i) => SC_STEPS[i].ph.replace(/^e\.g\.\s*/, "");
+  const val = (i, raw) => (raw && raw.trim() && raw !== SC_STEPS[i].ph) ? raw : ex(i);
+  const reachName = typeof data.reach === "number" ? reachOptions(data)[data.reach] : reachOptions(data)[0];
   const rows = [
-    { k: "Practical support", v: data.practical && data.practical.trim() ? data.practical : "—" },
-    { k: "Someone to talk to", v: data.vent && data.vent.trim() ? data.vent : "—" },
-    { k: "Who lifts you", v: data.lift && data.lift.trim() ? data.lift : "—" },
+    { k: "Practical support", v: val(0, data.practical) },
+    { k: "Someone to talk to", v: val(1, data.vent) },
+    { k: "Who lifts you", v: val(2, data.lift) },
     { k: "Reaching out first", v: reachName || "—" },
   ];
   return (
@@ -631,7 +635,7 @@ function Done({ data }) {
  * ============================================================ */
 const STEPS = [
   { key: "intro",  label: "Start", slug: "intro" },
-  { key: "ground", label: "Map",   slug: "map" },
+  { key: "ground", label: "Practice", slug: "practice" },
   { key: "done",   label: "Done",  slug: "done" },
 ];
 
@@ -653,7 +657,8 @@ const SC_STEPS = [
 
 // initial data: three named people (or notes) + the one chosen to reach out to
 function emptyEntries() {
-  return { practical: "", vent: "", lift: "", reach: null };
+  // Demo prefill: the three written lines start with their example text (shown faded, still editable)
+  return { practical: SC_STEPS[0].ph, vent: SC_STEPS[1].ph, lift: SC_STEPS[2].ph, reach: null };
 }
 
 function App() {
