@@ -75,12 +75,20 @@
       border: 0; border-radius: 8px; padding: 8px 10px; color: rgba(255,255,255,.74); font-family: inherit; font-size: 13px;
       font-weight: 400; cursor: pointer; transition: background .12s, color .12s; }
     .mod-dd-item .mod-dd-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Status-driven emphasis so the list scans at a glance: ready modules (green Copy / amber Clinical)
+       read full-white and pop; WIP rows (gray product/draft) dim back and recede. */
+    .mod-dd-item[data-status="copy"] .mod-dd-name,
+    .mod-dd-item[data-status="clinical"] .mod-dd-name { color: #fff; font-weight: 500; }
+    .mod-dd-item[data-status="product"] .mod-dd-name,
+    .mod-dd-item[data-status="draft"] .mod-dd-name { color: rgba(255,255,255,.4); font-weight: 400; }
     .mod-dd-item:hover { background: #31353c; color: #fff; }
+    .mod-dd-item:hover .mod-dd-name { color: #fff; }
     .mod-dd-item.active { background: var(--shell-active); color: #fff; font-weight: 500; }
+    .mod-dd-item.active .mod-dd-name { color: #fff; }
     .mod-dd-item .mod-dd-check { margin-left: 4px; opacity: 0; font-size: 12px; }
     .mod-dd-item.active .mod-dd-check { opacity: 1; }
     /* review-status dot that leads each module row (color set inline per status) */
-    .mod-dd-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+    .mod-dd-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 
     /* review-status filter bar: chips span the full mega-menu width and read as a legend too */
     .mod-dd-filters { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap;
@@ -161,22 +169,28 @@
        * tag the new modules with the matching `tier` — the dropdown groups itself automatically. */
       var TIERS = ["In the moment", "Work through it", "Recharge & connect", "Check in & learn", "Get support"];
 
-      /* Review status per module — the pipeline stage each build is at:
-       *   clinical = signed off by product, ready for clinical review
-       *   product  = still under product-team review
-       *   draft    = early work in progress
+      /* Review status per module — the pipeline stages, earliest → most ready. Dot color is a
+       * maturity ramp (gray → blue → amber → green), with green reserved for the finish line:
+       *   draft    = early work in progress (none right now)               — gray
+       *   product  = WIP, in review with the product team / PMs            — blue
+       *   clinical = first clinical review (a "does it look correct" pass) — amber
+       *   copy     = copy review by clinical after overall approval (last) — green
        * Flip a module here as it advances a stage; anything not listed defaults to "product".
        * The dropdown draws a status dot on every row and a filter/legend chip bar from this. */
       var STATUS = {
-        clinical: { label: "Ready for clinical", dot: "#5DCAA5" },
-        product:  { label: "In product review",  dot: "#EF9F27" },
-        draft:    { label: "Draft",              dot: "#9aa0aa" },
+        copy:     { label: "Ready for Copy review", dot: "#34B27B" },
+        clinical: { label: "Ready for clinical",    dot: "#EF9F27" },
+        // product + draft share a faded gray — early stages that recede so green/amber pop (may merge long term)
+        product:  { label: "In product review",     dot: "rgba(154,160,170,0.5)" },
+        draft:    { label: "Draft",                 dot: "rgba(154,160,170,0.5)" },
       };
-      var STATUS_ORDER = ["clinical", "product", "draft"];
+      // chip + sort order: most-ready first (copy → clinical → product → draft)
+      var STATUS_ORDER = ["copy", "clinical", "product", "draft"];
       var STATUS_BY_ID = {
-        // original set — product-approved, ready for clinical review
-        reset4: "clinical", solving: "clinical", grounding: "clinical", selfcompassion: "clinical",
-        support: "clinical", gratitude: "clinical", benefits: "clinical", screener: "clinical",
+        // ready for copy review — content/wording pass
+        reset4: "copy", grounding: "copy", solving: "copy", gratitude: "copy",
+        // product-approved, ready for clinical review
+        selfcompassion: "clinical", support: "clinical", benefits: "clinical", screener: "clinical",
         pulse: "clinical", psychoed: "clinical", reflect: "clinical",
         // newer builds — still in product review
         rethink: "product", stopreappraisal: "product", control: "product",
