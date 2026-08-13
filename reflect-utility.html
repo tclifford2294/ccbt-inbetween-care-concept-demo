@@ -571,21 +571,47 @@ function Choose({ data, set }) {
   );
 }
 
-// Screen 3 — Guided write
-function Write({ data, set }) {
+// Screen 3 — Guided write. Two prompts, one per sub-step; the second step shows the first
+// answer back in a grey recap card (Solving-the-Problem style) so the two lines stay connected.
+function Write({ data, set, stage }) {
   const m = MODES.find(x => x.key === data.mode) || MODES[0];
   const vals = data.entries[m.key];
   const setVal = (i, v) => set({ ...data, entries: { ...data.entries, [m.key]: vals.map((x, k) => k === i ? v : x) } });
-  return (
-    <>
-      <Title eyebrow="Reflect" title={m.title}>{m.lede}</Title>
-      <div className="rf-fields">
-        {m.fields.map((f, i) => (
-          <InputField key={i} label={f.label} multiline rows={2} placeholder={f.ph}
-            value={vals[i]} onChange={e => setVal(i, e.target.value)} />
-        ))}
+
+  // cross-dissolve between the two prompts
+  const [shown, setShown] = useState(stage);
+  const [visible, setVisible] = useState(true);
+  React.useEffect(() => {
+    if (stage === shown) return;
+    setVisible(false);
+    const t = setTimeout(() => { setShown(stage); setVisible(true); }, 220);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  const f = m.fields[shown];
+  const eyebrow = `Reflect · ${shown + 1} of ${m.fields.length}`;
+
+  // recap of the first prompt + its answer, shown above the second field
+  const first = m.fields[0];
+  const firstVal = vals[0] && vals[0].trim() ? vals[0] : first.ph;
+  const recap = (
+    <Card muted>
+      <div className="ex-recap">
+        <span className="k">{first.label}</span>
+        <p className="sr-body-m" style={{ margin: 0 }}>{firstVal}</p>
       </div>
-    </>
+    </Card>
+  );
+
+  return (
+    <div className={"ex-stage " + (visible ? "in" : "out")}>
+      <Title eyebrow={eyebrow} title={m.title}>{shown === 0 ? m.lede : null}</Title>
+      {shown > 0 && recap}
+      {/* keyed per sub-step so the field re-mounts and rides the staggered reveal — on step 2 it
+          lands after the grey recap card instead of appearing at the same time */}
+      <InputField key={"wf" + shown} label={f.label} multiline rows={2} placeholder={f.ph}
+        value={vals[shown]} onChange={e => setVal(shown, e.target.value)} />
+    </div>
   );
 }
 
@@ -622,7 +648,7 @@ const MODES = [
     title: "Catch the thought, then soften it",
     lede: "Worries often sound worse in our heads than they would out loud. Getting one down — and answering it kindly — takes some of its charge away.",
     fields: [
-      { label: "A thought that's felt heavier than it needs to", ph: "e.g. \"I'll never get on top of all this.\"" },
+      { label: "A thought that's felt heavier than it needs to be", ph: "e.g. \"I'll never get on top of all this.\"" },
       { label: "What you'd say to a friend who had that exact thought", ph: "Say it as kindly as you would to them." },
     ] },
   { key: "lift", label: "Plan one small lift", Icon: IcHeart, blurb: "A tiny pleasant thing to look forward to.",
@@ -636,7 +662,7 @@ const MODES = [
     title: "One line to protect your time",
     lede: "A lot of stress rides in on things we didn't feel able to say no to. One clear, kind line is often all it takes.",
     fields: [
-      { label: "Where you could use a boundary this week", ph: "e.g. after-hours work messages" },
+      { label: "Where would you like to set a boundary this week?", ph: "e.g. after-hours work messages" },
       { label: "One line you could say", ph: "Try \"I can't take that on, but I can…\"" },
     ] },
 ];
@@ -652,6 +678,7 @@ function initialEntries() {
 
 function App() {
   const [idx, setIdx] = useState(0);
+  const [wstage, setWstage] = useState(0); // sub-step within the write screen (0 = first prompt, 1 = second)
   const [data, setData] = useState({ mode: null, entries: initialEntries() });
 
   // Shell bridge: the chosen mode + what was written transfer between the Utility and Immersion looks.
@@ -661,15 +688,18 @@ function App() {
       if (!m || typeof m !== "object") return;
       if (m.type === "reset:getState") {
         var w = e.source || window.parent;
-        if (w) w.postMessage({ type: "reset:state", idx: idx, data: { mode: data.mode, entries: data.entries } }, "*");
+        if (w) w.postMessage({ type: "reset:state", idx: idx, data: { mode: data.mode, entries: data.entries, _ex: wstage } }, "*");
       } else if (m.type === "reset:next") {
-        setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); });
+        if (STEPS[idx].key === "write" && wstage < writeLast) { setWstage(wstage + 1); }
+        else { if (STEPS[idx].key === "choose") setWstage(0); setIdx(function (i) { return Math.min(i + 1, STEPS.length - 1); }); }
       } else if (m.type === "reset:prev") {
-        setIdx(function (i) { return Math.max(i - 1, 0); });
+        if (STEPS[idx].key === "write" && wstage > 0) { setWstage(wstage - 1); }
+        else { var p = Math.max(idx - 1, 0); if (STEPS[p].key === "write") setWstage(writeLast); setIdx(p); }
       } else if (m.type === "reset:setState") {
         if (typeof m.idx === "number") setIdx(m.idx);
         if (m.data && typeof m.data === "object") {
           var inc = Object.assign({}, m.data);
+          if (typeof inc._ex === "number") setWstage(inc._ex);
           delete inc._ex;
           setData(function (d) { return Object.assign({}, d, inc); });
         }
@@ -677,28 +707,44 @@ function App() {
     }
     window.addEventListener("message", onMsg);
     return function () { window.removeEventListener("message", onMsg); };
-  }, [idx, data]);
+  }, [idx, data, wstage]);
 
   const cur = STEPS[idx];
   const last = idx === STEPS.length - 1;
   const onChoose = cur.key === "choose";
   const onWrite = cur.key === "write";
+  const mode = MODES.find(x => x.key === data.mode) || MODES[0];
+  const writeLast = mode.fields.length - 1; // last write sub-step index
   const canAdvance = onChoose ? data.mode != null : true;
 
-  const goNext = () => setIdx(idx + 1);
-  const goBack = () => { if (idx > 0) setIdx(idx - 1); };
-  const nextLabel = idx === 0 ? "Begin" : onChoose ? "Start writing" : onWrite ? "Done for now" : "Continue";
+  const goNext = () => {
+    if (onWrite && wstage < writeLast) { setWstage(wstage + 1); return; }
+    if (onChoose) setWstage(0); // enter the write screen at the first prompt
+    setIdx(idx + 1);
+  };
+  const goBack = () => {
+    if (onWrite && wstage > 0) { setWstage(wstage - 1); return; }
+    if (idx > 0) {
+      var prev = idx - 1;
+      if (STEPS[prev].key === "write") setWstage(writeLast); // step back into the last prompt
+      setIdx(prev);
+    }
+  };
+  const nextLabel = idx === 0 ? "Begin"
+    : onChoose ? "Start writing"
+    : onWrite ? (wstage < writeLast ? "Next" : "Done for now")
+    : "Continue";
 
   const screen = {
     intro:  <Intro />,
     choose: <Choose data={data} set={setData} />,
-    write:  <Write data={data} set={setData} />,
+    write:  <Write data={data} set={setData} stage={wstage} />,
     done:   <Done />,
   }[cur.key];
 
   const actions = last ? (
     <>
-      <Button variant="outlined" onClick={() => { setIdx(0); setData({ mode: null, entries: initialEntries() }); }}>Start over</Button>
+      <Button variant="outlined" onClick={() => { setIdx(0); setWstage(0); setData({ mode: null, entries: initialEntries() }); }}>Start over</Button>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Button variant="filled" trailingIcon={<IcArrowR size={18} />}>Back to Stress Program</Button>
       </div>
